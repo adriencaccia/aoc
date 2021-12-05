@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "target": "ES2020",
+    "strict": true,
+    "baseUrl": ".",
+  },
+  "include": ["./**/*.ts"]
+}
