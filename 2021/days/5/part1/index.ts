@@ -1,6 +1,9 @@
 import { readFileSync } from "fs";
-import { flatten, maxBy } from "lodash";
-import { join } from "path";
+import { flatten, maxBy } from "lodash-es";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 interface Coords {
   x1: number;

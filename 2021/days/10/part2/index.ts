@@ -1,6 +1,9 @@
 import { readFileSync } from "fs";
-import { reverse } from "lodash";
-import { join } from "path";
+import { reverse } from "lodash-es";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const CLOSING_CHARACTERS_MAP = {
   ")": { score: 3, openingCharacter: "(" },

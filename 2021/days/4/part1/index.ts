@@ -1,6 +1,9 @@
 import { readFileSync } from "fs";
-import { chunk, flatten, intersection, sum } from "lodash";
-import { join } from "path";
+import { chunk, flatten, intersection, sum } from "lodash-es";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function invertBoard(board: number[][]) {
   return board[0].map((_, colIndex) => board.map((row) => row[colIndex]));

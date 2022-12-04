@@ -1,6 +1,9 @@
 import { readFileSync } from "fs";
-import { flatten } from "lodash";
-import { join } from "path";
+import { flatten } from "lodash-es";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function getCleanFlashMatrix(lines: string[]) {
   return lines.map((line) => line.split("").map(() => false));
