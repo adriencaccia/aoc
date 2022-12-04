@@ -6,7 +6,7 @@
   },
   "search.exclude": {
     "**/node_modules": true,
-    "yarn.lock": true
+    "pnpm-lock.yaml": true
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "files.exclude": {}
