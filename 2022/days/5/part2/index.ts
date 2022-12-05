@@ -26,7 +26,9 @@ function main() {
     }
   }
 
-  const stacks = reversedStacks.map((stack) => stack.split("").reverse());
+  const stacks = reversedStacks.map((stack) =>
+    stack.split("").reverse().join("")
+  );
 
   const instructions = instructionsInput.map((instruction) => {
     return instruction
@@ -41,13 +43,15 @@ function main() {
     stackToMoveTo,
   ] of instructions) {
     const stackToMoveFromLength = stacks[stackToMoveFrom - 1].length;
-    const cratesToMove = stacks[stackToMoveFrom - 1].splice(
-      stackToMoveFromLength - numberOfCratesToMove,
-      numberOfCratesToMove
+    const cratesToMove = stacks[stackToMoveFrom - 1].substring(
+      stackToMoveFromLength - numberOfCratesToMove
+    );
+    stacks[stackToMoveFrom - 1] = stacks[stackToMoveFrom - 1].slice(
+      0,
+      -numberOfCratesToMove
     );
 
-    const stackToMoveToLength = stacks[stackToMoveTo - 1].length;
-    stacks[stackToMoveTo - 1].splice(stackToMoveToLength, 0, ...cratesToMove);
+    stacks[stackToMoveTo - 1] = stacks[stackToMoveTo - 1].concat(cratesToMove);
   }
 
   const answer = stacks.map((stack) => stack.at(-1)).join("");
