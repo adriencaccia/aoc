@@ -11,5 +11,9 @@
     "baseUrl": ".",
     "outDir": "dist"
   },
+  "ts-node": {
+    "esm": true,
+    "swc": true
+  },
   "include": ["./**/*.ts"]
 }
