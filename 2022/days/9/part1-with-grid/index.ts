@@ -1,4 +1,5 @@
 import { readFileSync } from "fs";
+import { cloneDeep } from "lodash-es";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 // import logMatrix from "../../../../utils/logMatrix.js";
@@ -47,13 +48,17 @@ function main() {
 
   const gridSize = 300;
 
-  const visitGrid = Array(gridSize)
+  const grid = Array(gridSize)
     .fill(0)
     .map((_) =>
       Array(gridSize)
         .fill(0)
         .map((_) => ".")
     );
+
+  const visitGrid = cloneDeep(grid);
+
+  grid[gridSize / 2][gridSize / 2] = "H";
 
   const rope = {
     head: { i: gridSize / 2, j: gridSize / 2 },
@@ -64,6 +69,7 @@ function main() {
 
   for (const [direction, numberOfMoves] of moves) {
     for (let move = 0; move < numberOfMoves; move++) {
+      grid[rope.head.i][rope.head.j] = ".";
       if (direction === "R") {
         rope.head.j += 1;
       }
@@ -76,7 +82,10 @@ function main() {
       if (direction === "D") {
         rope.head.i += 1;
       }
+      grid[rope.tail.i][rope.tail.j] = ".";
       moveTail(rope);
+      grid[rope.tail.i][rope.tail.j] = "T";
+      grid[rope.head.i][rope.head.j] = "H";
       if (visitGrid[rope.tail.i][rope.tail.j] !== "#") {
         visitedPositions += 1;
       }
