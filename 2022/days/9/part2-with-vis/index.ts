@@ -1,0 +1,125 @@
+import { createCanvas } from "canvas";
+import { createWriteStream, readFileSync } from "fs";
+import { cloneDeep } from "lodash-es";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+// import logMatrix from "../../../../utils/logMatrix.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+interface Indices {
+  i: number;
+  j: number;
+}
+
+type Rope = Indices[];
+
+function moveKnot(rope: Rope, knotIndex: number) {
+  // head and tail touching
+  if (
+    Math.abs(rope[knotIndex - 1].i - rope[knotIndex].i) < 2 &&
+    Math.abs(rope[knotIndex - 1].j - rope[knotIndex].j) < 2
+  ) {
+    return;
+  }
+  // head above or below the tail
+  if (
+    Math.abs(rope[knotIndex - 1].i - rope[knotIndex].i) == 2 &&
+    rope[knotIndex - 1].j === rope[knotIndex].j
+  ) {
+    rope[knotIndex].i =
+      rope[knotIndex].i + (rope[knotIndex - 1].i - rope[knotIndex].i) / 2;
+    return;
+  }
+  // head left or right of tail
+  if (
+    rope[knotIndex - 1].i === rope[knotIndex].i &&
+    Math.abs(rope[knotIndex - 1].j - rope[knotIndex].j) == 2
+  ) {
+    rope[knotIndex].j =
+      rope[knotIndex].j + (rope[knotIndex - 1].j - rope[knotIndex].j) / 2;
+    return;
+  }
+  // tail moves diagonally
+  rope[knotIndex].i =
+    rope[knotIndex].i + Math.sign(rope[knotIndex - 1].i - rope[knotIndex].i);
+  rope[knotIndex].j =
+    rope[knotIndex].j + Math.sign(rope[knotIndex - 1].j - rope[knotIndex].j);
+}
+
+function main() {
+  const input = readFileSync(join(__dirname, "../input.txt"), "utf8");
+  const moves = input.split("\n").map((line) => {
+    const [direction, numberOfMoves] = line.split(" ");
+    return [direction, Number(numberOfMoves)] as const;
+  });
+
+  const gridSize = 300;
+
+  const canvas = createCanvas(300, 300);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, 300, 300);
+
+  const grid = Array(gridSize)
+    .fill(0)
+    .map((_) =>
+      Array(gridSize)
+        .fill(0)
+        .map((_) => ".")
+    );
+
+  const visitGrid = cloneDeep(grid);
+
+  grid[gridSize / 2][gridSize / 2] = "H";
+
+  const rope = Array(10)
+    .fill(0)
+    .map((_) => ({ i: gridSize / 2, j: gridSize / 2 }));
+
+  let visitedPositions = 0;
+
+  for (const [direction, numberOfMoves] of moves) {
+    for (let move = 0; move < numberOfMoves; move++) {
+      grid[rope[0].i][rope[0].j] = ".";
+      if (direction === "R") {
+        rope[0].j += 1;
+      }
+      if (direction === "L") {
+        rope[0].j -= 1;
+      }
+      if (direction === "U") {
+        rope[0].i -= 1;
+      }
+      if (direction === "D") {
+        rope[0].i += 1;
+      }
+      for (let knotIndex = 1; knotIndex < 10; knotIndex++) {
+        grid[rope[knotIndex].i][rope[knotIndex].j] = ".";
+        moveKnot(rope, knotIndex);
+        grid[rope[knotIndex].i][rope[knotIndex].j] = "T";
+      }
+
+      grid[rope[0].i][rope[0].j] = "H";
+      if (visitGrid[rope.at(-1)?.i ?? 0][rope.at(-1)?.j ?? 0] !== "#") {
+        visitedPositions += 1;
+
+        ctx.strokeRect(rope.at(-1)?.i ?? 0, rope.at(-1)?.j ?? 0, 1, 1);
+      }
+      visitGrid[rope.at(-1)?.i ?? 0][rope.at(-1)?.j ?? 0] = "#";
+      // console.log(`move ${direction}`);
+      // logMatrix(grid);
+    }
+  }
+
+  // logMatrix(visitGrid);
+  console.log(visitedPositions);
+
+  const out = createWriteStream(__dirname + "/tail-path.png");
+  const stream = canvas.createPNGStream();
+  stream.pipe(out);
+}
+
+main();
+
+// 2541
