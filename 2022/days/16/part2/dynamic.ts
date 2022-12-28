@@ -162,9 +162,32 @@ function main() {
     }
   }
 
-  console.log(ans);
+  let ans2 = 0;
+
+  for (let i = 0; i < 1 << nonZeroValves.length; i++) {
+    for (let j = 0; j < 1 << nonZeroValves.length; j++) {
+      if ((i & j) !== j) {
+        continue;
+      }
+
+      let a = -99999999;
+      let b = -99999999;
+
+      for (let k = 0; k < nonZeroValves.length; k++) {
+        a = Math.max(a, dp[26][k][j]);
+      }
+
+      for (let k = 0; k < nonZeroValves.length; k++) {
+        b = Math.max(b, dp[26][k][i & ~j]);
+      }
+
+      ans2 = Math.max(ans2, a + b);
+    }
+  }
+
+  console.log(ans2);
 }
 
 main();
 
-// 1944
+// 2679
