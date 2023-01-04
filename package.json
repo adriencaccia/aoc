@@ -5,7 +5,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "tsc && find . -name '*.txt' -not -path './node_modules/*' | cpio -pdm dist"
+    "build": "tsc && find . -name '*.txt' -not -path './node_modules/*' | cpio -pdm dist",
+    "init": "node ./scripts/init.js"
   },
   "devDependencies": {
     "@swc/core": "^1.3.21",
@@ -24,8 +25,10 @@
   },
   "dependencies": {
     "@types/lodash-es": "^4.17.6",
+    "@types/shelljs": "^0.8.11",
     "canvas": "^2.10.2",
     "lodash-es": "^4.17.21",
-    "log-update": "^5.0.1"
+    "log-update": "^5.0.1",
+    "shelljs": "^0.8.5"
   }
 }
