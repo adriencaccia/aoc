@@ -42,7 +42,36 @@ function goA(input: string) {
 function goB(input: string) {
   const parsedInput = parseInput(input);
 
-  return parsedInput.length;
+  const santa = { x: 0, y: 0 };
+  const robot = { x: 0, y: 0 };
+  const houses: Record<string, number> = { x0y0: 1 };
+  let index = 0;
+  for (const direction of parsedInput) {
+    switch (direction) {
+      case "v":
+        (index % 2 === 0 ? santa : robot).x++;
+        break;
+      case ">":
+        (index % 2 === 0 ? santa : robot).y++;
+        break;
+      case "^":
+        (index % 2 === 0 ? santa : robot).x--;
+        break;
+      case "<":
+        (index % 2 === 0 ? santa : robot).y--;
+        break;
+    }
+    const x = (index % 2 === 0 ? santa : robot).x;
+    const y = (index % 2 === 0 ? santa : robot).y;
+    index++;
+    if (houses[`x${x}y${y}`]) {
+      houses[`x${x}y${y}`]++;
+      continue;
+    }
+    houses[`x${x}y${y}`] = 1;
+  }
+
+  return Object.keys(houses).length;
 }
 
 function main() {
@@ -59,5 +88,5 @@ function main() {
 
 main();
 
-// ???
-// ???
+// 2081
+// 2341
