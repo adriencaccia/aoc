@@ -1,7 +1,10 @@
 import { execSync } from "child_process";
 import shelljs from "shelljs";
 
-const [, , , year, , day] = process.argv;
+// usage:
+// node scripts/init.js 2022 19
+
+const [, , year, day] = process.argv;
 
 const dayPath = `${year}/days/${day}`;
 
