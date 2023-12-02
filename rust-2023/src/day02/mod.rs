@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use parse_display::FromStr;
 use regex::Regex;
-use std::str::FromStr as StdFromStr;
+use std::{str::FromStr as StdFromStr, u32};
 
 // only 12 red cubes, 13 green cubes, and 14 blue cubes
 
@@ -45,11 +45,40 @@ fn parse_input() -> u32 {
         .sum()
 }
 
-pub fn main() -> (u32, u64) {
+fn parse_input_2() -> u32 {
+    include_str!("input.txt")
+        .lines()
+        .map(|line| -> u32 {
+            let game: Game = line.parse().unwrap();
+            let mut min_red = 0;
+            let mut min_green = 0;
+            let mut min_blue = 0;
+            game.revealed_sets.split(';').for_each(|set| {
+                let cubes = RevealedCubesNew::from_str(set).unwrap();
+
+                if cubes.red > min_red {
+                    min_red = cubes.red;
+                }
+                if cubes.green > min_green {
+                    min_green = cubes.green;
+                }
+                if cubes.blue > min_blue {
+                    min_blue = cubes.blue;
+                }
+            });
+            min_red as u32 * min_green as u32 * min_blue as u32
+        })
+        .sum()
+}
+
+pub fn main() -> (u32, u32) {
     let part1 = parse_input();
     println!("part1 {}", part1);
 
-    (part1, 0)
+    let part2 = parse_input_2();
+    println!("part2 {}", part2);
+
+    (part1, part2)
 }
 
 lazy_static! {
