@@ -1,17 +1,8 @@
-fn parse_input() -> Vec<u64> {
-    include_str!("input.txt")
-        .lines()
-        .map(|line| line.chars().filter(|char| char.is_ascii_digit()))
-        .map(|digits| {
-            let vec: Vec<char> = digits.collect();
-            let two_digits = format!(
-                "{:?}{:?}",
-                vec.first().unwrap().to_digit(10).unwrap(),
-                vec.last().unwrap().to_digit(10).unwrap()
-            );
-            two_digits.parse().unwrap()
-        })
-        .collect()
+fn parse_input() -> impl Iterator<Item = u32> {
+    include_str!("input.txt").lines().map(|line| {
+        let digits = line.chars().filter_map(|char| char.to_digit(10));
+        digits.clone().next().unwrap() * 10 + digits.last().unwrap()
+    })
 }
 
 fn parse_input_part_2() -> Vec<u64> {
@@ -82,9 +73,9 @@ fn parse_input_part_2() -> Vec<u64> {
         .collect()
 }
 
-pub fn main() -> (u64, u64) {
+pub fn main() -> (u32, u64) {
     let input = parse_input();
-    let part1: u64 = input.iter().sum();
+    let part1 = input.sum();
     println!("part1 {}", part1);
 
     let input2 = parse_input_part_2();
