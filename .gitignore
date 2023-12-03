@@ -40,4 +40,4 @@ yarn-error.log*
 target
 
 # ignore the input files
-rust-2023/**/*.txt
+2023/**/*.txt
