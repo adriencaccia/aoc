@@ -2,16 +2,8 @@ use std::collections::HashMap;
 
 use regex::Regex;
 
-fn get_char_at_index(input_string: &str, index: usize) -> Option<char> {
-    input_string.as_bytes().get(index).map(|byte| *byte as char)
-}
-
-fn is_symbol(char: char) -> bool {
-    !char.is_ascii_digit() && char != '.'
-}
-
-fn parse_input() -> (u32, u32) {
-    let matrix: Vec<&str> = include_str!("input.txt").lines().collect();
+fn parse_input(input: &str) -> (u32, u32) {
+    let matrix: Vec<&str> = input.lines().collect();
 
     let height = matrix.len();
     let width = matrix[0].len();
@@ -34,63 +26,30 @@ fn parse_input() -> (u32, u32) {
                 range.end + 1
             };
             let range_to_match = start..end;
+            let mut indices = Vec::new();
+            if i != 0 {
+                indices.extend(range_to_match.clone().map(|y| (i - 1, y)));
+            }
+            if i + 1 < height {
+                indices.extend(range_to_match.clone().map(|y| (i + 1, y)));
+            }
+            indices.push((i, range_to_match.start));
+            indices.push((i, range_to_match.end - 1));
 
-            let is_symbol_in_upper_string = i != 0
-                && matrix[i - 1]
-                    .get(range_to_match.clone())
-                    .map_or(false, |sub| {
-                        for (idx, char) in sub.char_indices() {
-                            if char == '*' {
-                                gears
-                                    .entry((i - 1, range_to_match.start + idx))
-                                    .or_default()
-                                    .push(number);
-                            }
-                        }
-
-                        sub.chars().any(is_symbol)
-                    });
-            let is_symbol_in_lower_string = i + 1 < height
-                && matrix[i + 1]
-                    .get(range_to_match.clone())
-                    .map_or(false, |sub| {
-                        for (idx, char) in sub.char_indices() {
-                            if char == '*' {
-                                gears
-                                    .entry((i + 1, range_to_match.start + idx))
-                                    .or_default()
-                                    .push(number);
-                            }
-                        }
-
-                        sub.chars().any(is_symbol)
-                    });
-            let is_symbol_left = range.start != range_to_match.start
-                && get_char_at_index(matrix[i], range_to_match.start).map_or(false, |char| {
+            let has_symbol = indices
+                .into_iter()
+                .map(|(x, y)| {
+                    let char = matrix[x].chars().nth(y).unwrap();
                     if char == '*' {
-                        gears
-                            .entry((i, range_to_match.start))
-                            .or_default()
-                            .push(number);
-                    }
-                    is_symbol(char)
-                });
-            let is_symbol_right = range.end != range_to_match.end
-                && get_char_at_index(matrix[i], range_to_match.end - 1).map_or(false, |char| {
-                    if char == '*' {
-                        gears
-                            .entry((i, range_to_match.end - 1))
-                            .or_default()
-                            .push(number);
-                    }
-                    is_symbol(char)
-                });
+                        gears.entry((x, y)).or_default().push(number);
 
-            if is_symbol_in_lower_string
-                || is_symbol_in_upper_string
-                || is_symbol_left
-                || is_symbol_right
-            {
+                        return true;
+                    }
+                    !char.is_ascii_digit() && char != '.'
+                })
+                .any(|b| b);
+
+            if has_symbol {
                 part1 += number;
             }
         }
@@ -111,7 +70,7 @@ fn parse_input() -> (u32, u32) {
 }
 
 pub fn main() -> (u32, u32) {
-    let (part1, part2) = parse_input();
+    let (part1, part2) = parse_input(include_str!("input.txt"));
     println!("part1 {}", part1);
     println!("part2 {}", part2);
 
@@ -122,8 +81,29 @@ pub fn main() -> (u32, u32) {
 mod tests {
     use super::*;
 
+    const EXAMPLE_INPUT: &str = r#"
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+"#;
+
     #[test]
-    fn test() {
+    fn test_example() {
+        let (part1, part2) = parse_input(EXAMPLE_INPUT.trim());
+
+        assert_eq!(part1, 4361);
+        assert_eq!(part2, 467835);
+    }
+
+    #[test]
+    fn test_main() {
         let (part1, part2) = main();
 
         assert_eq!(part1, 527364);
