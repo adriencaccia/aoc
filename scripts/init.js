@@ -6,7 +6,7 @@ import shelljs from "shelljs";
 
 const [, , year, day] = process.argv;
 
-const dayPath = `${year}/days/${day}`;
+const dayPath = `${year}/src/day${day.padStart(2, "0")}`;
 
 console.log(`Creating file structure for year ${year} day ${day}...`);
 shelljs.mkdir("-p", dayPath);
