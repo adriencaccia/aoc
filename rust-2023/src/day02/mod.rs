@@ -56,9 +56,8 @@ pub fn main() -> (u32, u32) {
 }
 
 lazy_static! {
-    static ref RED_REGEX: Regex = Regex::new(r"(?P<red>\d+) red",).unwrap();
-    static ref GREEN_REGEX: Regex = Regex::new(r"(?P<green>\d+) green",).unwrap();
-    static ref BLUE_REGEX: Regex = Regex::new(r"(?P<blue>\d+) blue",).unwrap();
+    static ref CUBES_REGEX: Regex =
+        Regex::new(r"((?P<red>\d+) red)|((?P<green>\d+) green)|((?P<blue>\d+) blue)",).unwrap();
 }
 
 #[derive(Debug, PartialEq)]
@@ -75,26 +74,44 @@ impl StdFromStr for RevealedCubes {
     type Err = MyError;
 
     fn from_str(string: &str) -> Result<Self, Self::Err> {
-        let red = RED_REGEX.captures(string).map_or(0, |cap| {
-            cap.name("red")
-                .map_or(0, |value| value.as_str().parse().unwrap())
-        });
-        let green = GREEN_REGEX.captures(string).map_or(0, |cap| {
-            cap.name("green")
-                .map_or(0, |value| value.as_str().parse().unwrap())
-        });
-        let blue = BLUE_REGEX.captures(string).map_or(0, |cap| {
-            cap.name("blue")
-                .map_or(0, |value| value.as_str().parse().unwrap())
-        });
+        let mut cube = Self {
+            red: 0,
+            green: 0,
+            blue: 0,
+        };
+        for capture in CUBES_REGEX.captures_iter(string) {
+            if let Some(red) = capture.name("red") {
+                cube.red = red.as_str().parse().unwrap();
+            }
+            if let Some(green) = capture.name("green") {
+                cube.green = green.as_str().parse().unwrap();
+            }
+            if let Some(blue) = capture.name("blue") {
+                cube.blue = blue.as_str().parse().unwrap();
+            }
+        }
 
-        Ok(Self { red, green, blue })
+        Ok(cube)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_cubes_regex() {
+        let mut it = CUBES_REGEX.captures_iter("8 green, 6 blue, 20 red");
+
+        let caps = it.next().unwrap();
+        assert_eq!(&caps["green"], "8");
+
+        let caps = it.next().unwrap();
+        assert_eq!(&caps["blue"], "6");
+
+        let caps = it.next().unwrap();
+        assert_eq!(&caps["red"], "20");
+    }
 
     #[test]
     fn test_parse_cubes_new() {
