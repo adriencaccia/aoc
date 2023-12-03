@@ -1,3 +1,4 @@
+use itertools::MultiUnzip;
 use lazy_static::lazy_static;
 use parse_display::FromStr;
 use regex::Regex;
@@ -12,85 +13,56 @@ struct Game {
     revealed_sets: String,
 }
 
-#[derive(FromStr, PartialEq, Debug)]
-#[from_str(regex = r"((?P<red>\d+) red)|((?P<green>\d+) green)|((?P<blue>\d+) blue)")]
-struct RevealedCubes {
-    #[from_str(default)]
-    red: u8,
-    #[from_str(default)]
-    green: u8,
-    #[from_str(default)]
-    blue: u8,
-}
-
-fn parse_input() -> u32 {
-    include_str!("input.txt")
+fn parse_input(input: &str) -> (u32, u32) {
+    let (part1, part2): (Vec<u32>, Vec<u32>) = input
         .lines()
         .map(|line| {
             let game: Game = line.parse().unwrap();
-            let is_valid = game
+            let cubes_sets = game
                 .revealed_sets
                 .split(';')
-                .map(|set| {
-                    let cubes = RevealedCubesNew::from_str(set).unwrap();
+                .map(|set| RevealedCubes::from_str(set).unwrap());
 
-                    cubes.red <= 12 && cubes.green <= 13 && cubes.blue <= 14
-                })
+            let is_game_valid = cubes_sets
+                .clone()
+                .map(|cubes| cubes.red <= 12 && cubes.green <= 13 && cubes.blue <= 14)
                 .all(|set| set);
-            match is_valid {
-                true => game.game_id,
-                false => 0,
-            }
-        })
-        .sum()
-}
 
-fn parse_input_2() -> u32 {
-    include_str!("input.txt")
-        .lines()
-        .map(|line| -> u32 {
-            let game: Game = line.parse().unwrap();
-            let mut min_red = 0;
-            let mut min_green = 0;
-            let mut min_blue = 0;
-            game.revealed_sets.split(';').for_each(|set| {
-                let cubes = RevealedCubesNew::from_str(set).unwrap();
+            let (red, green, blue): (Vec<u32>, Vec<u32>, Vec<u32>) = cubes_sets
+                .map(|cubes| (cubes.red as u32, cubes.green as u32, cubes.blue as u32))
+                .multiunzip();
 
-                if cubes.red > min_red {
-                    min_red = cubes.red;
-                }
-                if cubes.green > min_green {
-                    min_green = cubes.green;
-                }
-                if cubes.blue > min_blue {
-                    min_blue = cubes.blue;
-                }
-            });
-            min_red as u32 * min_green as u32 * min_blue as u32
+            (
+                match is_game_valid {
+                    true => game.game_id,
+                    false => 0,
+                },
+                red.into_iter().max().unwrap()
+                    * green.into_iter().max().unwrap()
+                    * blue.into_iter().max().unwrap(),
+            )
         })
-        .sum()
+        .unzip();
+
+    (part1.into_iter().sum(), part2.into_iter().sum())
 }
 
 pub fn main() -> (u32, u32) {
-    let part1 = parse_input();
+    let (part1, part2) = parse_input(include_str!("input.txt"));
     println!("part1 {}", part1);
-
-    let part2 = parse_input_2();
     println!("part2 {}", part2);
 
     (part1, part2)
 }
 
 lazy_static! {
-    static ref CUBES_REGEX: Regex =
-        Regex::new(r"((?P<red>\d+) red)|((?P<green>\d+) green)|((?P<blue>\d+) blue)",).unwrap();
     static ref RED_REGEX: Regex = Regex::new(r"(?P<red>\d+) red",).unwrap();
     static ref GREEN_REGEX: Regex = Regex::new(r"(?P<green>\d+) green",).unwrap();
     static ref BLUE_REGEX: Regex = Regex::new(r"(?P<blue>\d+) blue",).unwrap();
 }
 
 #[derive(Debug, PartialEq)]
-struct RevealedCubesNew {
+struct RevealedCubes {
     red: u8,
     green: u8,
     blue: u8,
@@ -99,7 +71,7 @@ struct RevealedCubesNew {
 #[derive(Debug, PartialEq, Eq)]
 struct MyError {}
 
-impl StdFromStr for RevealedCubesNew {
+impl StdFromStr for RevealedCubes {
     type Err = MyError;
 
     fn from_str(string: &str) -> Result<Self, Self::Err> {
@@ -117,25 +89,6 @@ impl StdFromStr for RevealedCubesNew {
         });
 
         Ok(Self { red, green, blue })
-
-        // let captures = CUBES_REGEX.captures(string).unwrap();
-        // let cap0 = captures.get(0);
-        // println!("{:?}", cap0);
-        // let red = captures.name("red");
-        // println!("{:?}", red);
-        // let blue = captures.name("blue");
-        // println!("{:?}", blue);
-        // Ok(Self {
-        //     red: captures
-        //         .name("red")
-        //         .map_or(0, |value| value.as_str().parse().unwrap()),
-        //     green: captures
-        //         .name("green")
-        //         .map_or(0, |value| value.as_str().parse().unwrap()),
-        //     blue: captures
-        //         .name("red")
-        //         .map_or(0, |value| value.as_str().parse().unwrap()),
-        // })
     }
 }
 
@@ -144,9 +97,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_cubes() {
+    fn test_parse_cubes_new() {
         assert_eq!(
-            "3 blue, 4 red".parse(),
+            RevealedCubes::from_str("3 blue, 4 red"),
             Ok(RevealedCubes {
                 red: 4,
                 green: 0,
@@ -155,25 +108,27 @@ mod tests {
         );
     }
 
+    const EXAMPLE_INPUT: &str = r#"
+Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+"#;
+
     #[test]
-    fn test_parse_cubes_new() {
-        assert_eq!(
-            RevealedCubesNew::from_str("3 blue, 4 red"),
-            Ok(RevealedCubesNew {
-                red: 4,
-                green: 0,
-                blue: 3,
-            })
-        );
+    fn test_example() {
+        let (part1, part2) = parse_input(EXAMPLE_INPUT.trim());
+
+        assert_eq!(part1, 8);
+        assert_eq!(part2, 2286);
     }
 
     #[test]
-    fn test_part_1() {
-        assert_eq!(main().0, 2810);
-    }
+    fn test_main() {
+        let (part1, part2) = main();
 
-    #[test]
-    fn test_part_2() {
-        assert_eq!(main().1, 53348);
+        assert_eq!(part1, 2810);
+        assert_eq!(part2, 69110);
     }
 }
