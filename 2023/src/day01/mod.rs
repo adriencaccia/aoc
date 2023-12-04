@@ -64,19 +64,18 @@ pub fn main() -> (u32, u32) {
 }
 #[cfg(test)]
 mod tests {
+    use indoc::indoc;
+
     use super::*;
 
     #[test]
     fn test_example_part1() {
-        let (part1, _part2) = parse_input(
-            r#"
-1abc2
-pqr3stu8vwx
-a1b2c3d4e5f
-treb7uchet
-        "#
-            .trim(),
-        );
+        let (part1, _part2) = parse_input(indoc! {"
+            1abc2
+            pqr3stu8vwx
+            a1b2c3d4e5f
+            treb7uchet
+        "});
 
         assert_eq!(part1, 142);
     }
@@ -85,16 +84,15 @@ treb7uchet
     fn test_example_part2() {
         let (_part1, part2) = parse_input(
             // ! Added a 1 to the second line to make the part1 algo work
-            r#"
-two1nine
-eightwo1three
-abcone2threexyz
-xtwone3four
-4nineeightseven2
-zoneight234
-7pqrstsixteen
-        "#
-            .trim(),
+            indoc! {"
+                two1nine
+                eightwo1three
+                abcone2threexyz
+                xtwone3four
+                4nineeightseven2
+                zoneight234
+                7pqrstsixteen
+            "},
         );
 
         assert_eq!(part2, 281);

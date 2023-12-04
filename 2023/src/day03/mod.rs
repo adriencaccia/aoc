@@ -79,24 +79,26 @@ pub fn main() -> (u32, u32) {
 
 #[cfg(test)]
 mod tests {
+    use indoc::indoc;
+
     use super::*;
 
-    const EXAMPLE_INPUT: &str = r#"
-467..114..
-...*......
-..35..633.
-......#...
-617*......
-.....+.58.
-..592.....
-......755.
-...$.*....
-.664.598..
-"#;
+    const EXAMPLE_INPUT: &str = indoc! {"
+        467..114..
+        ...*......
+        ..35..633.
+        ......#...
+        617*......
+        .....+.58.
+        ..592.....
+        ......755.
+        ...$.*....
+        .664.598..
+    "};
 
     #[test]
     fn test_example() {
-        let (part1, part2) = parse_input(EXAMPLE_INPUT.trim());
+        let (part1, part2) = parse_input(EXAMPLE_INPUT);
 
         assert_eq!(part1, 4361);
         assert_eq!(part2, 467835);

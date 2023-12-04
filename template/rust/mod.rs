@@ -16,15 +16,19 @@ pub fn main() -> (u32, u32) {
 
 #[cfg(test)]
 mod tests {
+    use indoc::indoc;
+
     use super::*;
 
-    const EXAMPLE_INPUT: &str = r#"
-<REPLACE ME>
-"#;
+    const EXAMPLE_INPUT: &str = indoc! {"
+        REPLACE
+        ME
+        WITH THE EXAMPLE
+    "};
 
     #[test]
     fn test_example() {
-        let (part1, part2) = parse_input(EXAMPLE_INPUT.trim());
+        let (part1, part2) = parse_input(EXAMPLE_INPUT);
 
         assert_eq!(part1, 0);
         assert_eq!(part2, 0);
