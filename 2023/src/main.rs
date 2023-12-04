@@ -3,6 +3,7 @@ use clap::Parser;
 mod day01;
 mod day02;
 mod day03;
+mod day04;
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -22,5 +23,8 @@ fn main() {
     }
     if args.day == 3 {
         day03::main();
+    }
+    if args.day == 4 {
+        day04::main();
     }
 }
