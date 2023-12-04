@@ -5,26 +5,42 @@ mod day02;
 mod day03;
 mod day04;
 
+const N_DAYS: u8 = 4;
+
 #[derive(Parser, Debug)]
 pub struct Args {
+    /// Day to run, if not specified all days will be run
     #[arg(short, long)]
-    pub day: u8,
+    pub day: Option<u8>,
+}
+
+fn run_day(day: u8) {
+    println!("Running day {}", day);
+
+    // Use a match statement to call the corresponding day module
+    match day {
+        1 => day01::main(),
+        2 => day02::main(),
+        3 => day03::main(),
+        4 => day04::main(),
+        _ => Default::default(),
+    };
+}
+
+fn run_all_days() {
+    println!("Running all days");
+
+    // Use a loop to iterate over all days and call their main functions
+    for day in 1..=N_DAYS {
+        run_day(day);
+    }
 }
 
 fn main() {
     let args = Args::parse();
-    println!("day {}", args.day);
 
-    if args.day == 1 {
-        day01::main();
-    }
-    if args.day == 2 {
-        day02::main();
-    }
-    if args.day == 3 {
-        day03::main();
-    }
-    if args.day == 4 {
-        day04::main();
+    match args.day {
+        Some(day) => run_day(day),
+        None => run_all_days(),
     }
 }
