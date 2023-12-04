@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use itertools::Itertools;
 
@@ -10,30 +10,25 @@ fn parse_input(input: &str) -> (u32, u32) {
     let part1 = lines
         .enumerate()
         .map(|(idx, line)| {
-            let (winning, mine) = line
+            let (winning, mine): (HashSet<&str>, HashSet<&str>) = line
                 .split(':')
                 .last()
                 .unwrap()
                 .split('|')
-                .map(|numbers| numbers.split_whitespace())
+                .map(|numbers| numbers.split_whitespace().collect())
                 .collect_tuple()
                 .unwrap();
 
-            let number_of_wins: u32 = mine
-                .filter(|number| winning.clone().any(|win| &win == number))
-                .collect_vec()
-                .len()
-                .try_into()
-                .unwrap();
+            let number_of_wins = winning.intersection(&mine).count();
 
             let number_of_copies = scratch_copies.entry(idx).or_insert(1).to_owned();
             for i in 0..number_of_wins {
-                *scratch_copies.entry(idx + i as usize + 1).or_insert(1) += number_of_copies;
+                *scratch_copies.entry(idx + i + 1).or_insert(1) += number_of_copies;
             }
 
             match number_of_wins {
                 0 => 0,
-                _ => 2_u32.pow(number_of_wins - 1),
+                _ => 2_u32.pow(number_of_wins as u32 - 1),
             }
         })
         .sum();
