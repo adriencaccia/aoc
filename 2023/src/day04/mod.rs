@@ -15,12 +15,7 @@ fn parse_input(input: &str) -> (u32, u32) {
                 .last()
                 .unwrap()
                 .split('|')
-                .map(|numbers| {
-                    numbers
-                        .split(' ')
-                        .map(|n| n.trim())
-                        .filter(|n| !n.is_empty())
-                })
+                .map(|numbers| numbers.split_whitespace())
                 .collect_tuple()
                 .unwrap();
 
