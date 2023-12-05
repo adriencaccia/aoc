@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use itertools::Itertools;
 
 fn parse_input(input: &str) -> (usize, usize) {
@@ -35,22 +37,21 @@ fn parse_input(input: &str) -> (usize, usize) {
         .map(|seed| {
             let mut seed_path: Vec<usize> = vec![*seed];
 
-            maps.iter().for_each(|map| {
+            for map in &maps {
                 let last_seed = *seed_path.last().unwrap();
                 let mut seed_in_ranges = false;
-                for (destination_range_start, source_range_start, range_length) in map {
-                    if (*source_range_start..(*source_range_start + *range_length))
+                for (destination_range_start, source_range_start, source_range_length) in map {
+                    if (*source_range_start..(*source_range_start + *source_range_length))
                         .contains(&last_seed)
                     {
-                        seed_path
-                            .push(*destination_range_start + (last_seed - *source_range_start));
+                        seed_path.push(destination_range_start + (last_seed - source_range_start));
                         seed_in_ranges = true;
                     }
                 }
                 if !seed_in_ranges {
                     seed_path.push(last_seed);
                 }
-            });
+            }
 
             seed_path
         })
@@ -61,7 +62,83 @@ fn parse_input(input: &str) -> (usize, usize) {
         .map(|paths| paths.last().unwrap())
         .min()
         .unwrap();
-    let part2 = 0;
+
+    // part 2
+    let seeds_ranges: Vec<(usize, usize)> = seeds
+        .chunks(2)
+        .map(|chunk| chunk.iter().copied().collect_tuple().unwrap())
+        .collect_vec();
+
+    let mut overall_locations = vec![];
+
+    for (start, length) in seeds_ranges {
+        #[allow(clippy::single_range_in_vec_init)]
+        let mut ranges: Vec<Range<usize>> = vec![start..(start + length)];
+
+        let mut finished_ranges: Vec<Range<usize>> = Vec::new();
+        for map in &maps {
+            let mut new_ranges: Vec<Range<usize>> = Vec::new();
+            for (destination_range_start, source_range_start, source_range_length) in map {
+                for range in ranges.clone() {
+                    let source_range_end = source_range_start + source_range_length;
+                    if range.end <= *source_range_start || source_range_end <= range.start {
+                        // unchanged range
+                        new_ranges.push(range);
+                    } else if range.start <= *source_range_start && source_range_end <= range.end {
+                        // before
+                        new_ranges.push(range.start..*source_range_start);
+                        // middle
+                        finished_ranges.push(
+                            *destination_range_start
+                                ..(destination_range_start + *source_range_length),
+                        );
+                        // after
+                        new_ranges.push(source_range_end..range.end)
+                    } else if range.start <= *source_range_start && range.end <= source_range_end {
+                        // before
+                        new_ranges.push(range.start..*source_range_start);
+                        // middle
+                        finished_ranges.push(
+                            *destination_range_start
+                                ..(destination_range_start + (range.end - *source_range_start)),
+                        );
+                    } else if *source_range_start <= range.start && range.end <= source_range_end {
+                        // middle
+                        finished_ranges.push(
+                            (destination_range_start + (range.start - source_range_start))
+                                ..((destination_range_start + (range.start - source_range_start))
+                                    + (range.end - range.start)),
+                        );
+                    } else if *source_range_start <= range.start && range.start <= source_range_end
+                    {
+                        // middle
+                        finished_ranges.push(
+                            (destination_range_start + (range.start - source_range_start))
+                                ..(destination_range_start
+                                    + (range.start - source_range_start)
+                                    + (source_range_end - range.start)),
+                        );
+                        // after
+                        new_ranges.push(source_range_end..range.end);
+                    }
+                }
+                ranges = new_ranges.clone();
+                new_ranges.clear();
+            }
+            ranges.extend(finished_ranges.clone());
+            finished_ranges.clear();
+        }
+
+        let locations = ranges
+            .iter()
+            .filter(|r| r.start != r.end)
+            .map(|r| r.start)
+            .collect_vec();
+        overall_locations.extend(locations);
+    }
+
+    let part2 = *overall_locations.iter().min().unwrap();
+
     (part1, part2)
 }
 
@@ -120,7 +197,7 @@ mod tests {
         let (part1, part2) = parse_input(EXAMPLE_INPUT);
 
         assert_eq!(part1, 35);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 46);
     }
 
     #[test]
@@ -128,6 +205,6 @@ mod tests {
         let (part1, part2) = main();
 
         assert_eq!(part1, 289863851);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 60568880);
     }
 }
