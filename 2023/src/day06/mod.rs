@@ -1,7 +1,29 @@
 use itertools::Itertools;
 
+/// Binary search to find the minimum time to beat the distance, and then calculate the number of
+/// ways to beat the distance.
+fn ways_to_beat_binary_search(params: (usize, usize)) -> usize {
+    let (duration, distance_to_beat) = params;
+
+    let mut min_time_beating = 0;
+    let mut max_time_beating = duration;
+
+    while min_time_beating < max_time_beating {
+        let time_holding_button = (min_time_beating + max_time_beating) / 2;
+        let distance = time_holding_button * (duration - time_holding_button);
+
+        if distance > distance_to_beat {
+            max_time_beating = time_holding_button;
+        } else {
+            min_time_beating = time_holding_button + 1;
+        }
+    }
+
+    (duration - 2 * min_time_beating) + 1
+}
+
 fn parse_input(input: &str) -> (u32, u32) {
-    let lines: Vec<Vec<u32>> = input
+    let lines: Vec<Vec<usize>> = input
         .trim()
         .lines()
         .map(|line| {
@@ -15,23 +37,23 @@ fn parse_input(input: &str) -> (u32, u32) {
         .collect_vec();
     let races = lines[0].iter().zip(lines[1].iter());
 
-    let part1: u32 = races
-        .map(|(duration, distance_to_beat)| {
-            let ways_to_beat = (0..=*duration)
-                .collect_vec()
-                .iter()
-                .map(|time_holding_button| {
-                    let distance = time_holding_button * (duration - time_holding_button);
-                    distance > *distance_to_beat
-                })
-                .filter(|w| *w)
-                .collect_vec();
+    let single_race: (usize, usize) =
+        races
+            .clone()
+            .rev()
+            .fold((0, 0), |acc, (&duration, &distance_to_beat)| match acc {
+                (0, 0) => (duration, distance_to_beat),
+                _ => (
+                    acc.0 + duration * 10_usize.pow(acc.0.ilog10() + 1),
+                    acc.1 + distance_to_beat * 10_usize.pow(acc.1.ilog10() + 1),
+                ),
+            });
 
-            ways_to_beat.len() as u32
-        })
-        .product();
+    let part1 = races
+        .map(|(&dur, &dist)| ways_to_beat_binary_search((dur, dist)))
+        .product::<usize>() as u32;
 
-    let part2 = 0;
+    let part2 = ways_to_beat_binary_search(single_race) as u32;
 
     (part1, part2)
 }
@@ -60,14 +82,14 @@ mod tests {
         let (part1, part2) = parse_input(EXAMPLE_INPUT);
 
         assert_eq!(part1, 288);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 71503);
     }
 
     #[test]
     fn test_main() {
         let (part1, part2) = main();
 
-        assert_eq!(part1, 140220);
-        assert_eq!(part2, 0);
+        assert_eq!(part1, 140_220);
+        assert_eq!(part2, 39_570_185);
     }
 }
