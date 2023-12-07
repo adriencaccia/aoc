@@ -1,25 +1,15 @@
 use itertools::Itertools;
 
-/// Binary search to find the minimum time to beat the distance, and then calculate the number of
-/// ways to beat the distance.
-fn ways_to_beat_binary_search(params: (usize, usize)) -> usize {
-    let (duration, distance_to_beat) = params;
+fn solve_quadratic_equation(params: (f64, f64)) -> usize {
+    let a = -1.0;
+    let (b, c) = params;
+    let discriminant = b * b - (4.0 * a * c);
+    let sqrt_discriminant = discriminant.sqrt();
 
-    let mut min_time_beating = 0;
-    let mut max_time_beating = duration;
+    let x1 = ((-(b) + sqrt_discriminant) / (2.0 * a)).ceil() as usize;
+    let x2 = ((-(b) - sqrt_discriminant) / (2.0 * a)).floor() as usize;
 
-    while min_time_beating < max_time_beating {
-        let time_holding_button = (min_time_beating + max_time_beating) / 2;
-        let distance = time_holding_button * (duration - time_holding_button);
-
-        if distance > distance_to_beat {
-            max_time_beating = time_holding_button;
-        } else {
-            min_time_beating = time_holding_button + 1;
-        }
-    }
-
-    (duration - 2 * min_time_beating) + 1
+    x2 - x1 + 1
 }
 
 fn parse_input(input: &str) -> (u32, u32) {
@@ -50,10 +40,11 @@ fn parse_input(input: &str) -> (u32, u32) {
             });
 
     let part1 = races
-        .map(|(&dur, &dist)| ways_to_beat_binary_search((dur, dist)))
+        .map(|(&dur, &dist)| solve_quadratic_equation((dur as f64, -(1.0 + dist as f64))))
         .product::<usize>() as u32;
 
-    let part2 = ways_to_beat_binary_search(single_race) as u32;
+    let part2 =
+        solve_quadratic_equation((single_race.0 as f64, -(1.0 + single_race.1 as f64))) as u32;
 
     (part1, part2)
 }
