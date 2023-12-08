@@ -9,7 +9,7 @@ mod day06;
 mod day07;
 mod day08;
 
-const N_DAYS: u8 = 4;
+const N_DAYS: u8 = 25;
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -33,7 +33,10 @@ fn run_day(day: u8) {
         }
         6 => day06::main(),
         7 => day07::main(),
-        8 => day08::main(),
+        8 => {
+            day08::main();
+            (0, 0)
+        }
         _ => Default::default(),
     };
 }
