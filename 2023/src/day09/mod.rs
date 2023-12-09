@@ -1,5 +1,28 @@
 use itertools::Itertools;
 
+fn get_extrapolated_value_from_line(mut line: Vec<i32>, part2: bool) -> i32 {
+    let mut start_idx = 1;
+    let mut values_to_sum: Vec<i32> = Vec::new();
+    while *line.last().unwrap() != 0 {
+        match part2 {
+            false => values_to_sum.push(line[line.len() - 1]),
+            true => values_to_sum.push(line[start_idx - 1]),
+        };
+        let mut value_to_subtract = line[start_idx - 1];
+        (start_idx..line.len()).for_each(|idx| {
+            let new_value = line[idx] - value_to_subtract;
+            value_to_subtract = line[idx];
+            line[idx] = new_value;
+        });
+        start_idx += 1;
+    }
+
+    match part2 {
+        false => values_to_sum.iter().sum(),
+        true => values_to_sum.iter().rev().fold(0, |acc, n| n - acc),
+    }
+}
+
 fn parse_input(input: &str) -> (i32, i32) {
     let lines: Vec<Vec<i32>> = input
         .trim()
@@ -11,40 +34,18 @@ fn parse_input(input: &str) -> (i32, i32) {
         })
         .collect_vec();
 
-    let mut part1 = 0;
-    for mut line in lines.clone() {
-        let mut acc = 0;
-        let mut start_idx = 1;
-        while *line.last().unwrap() != 0 {
-            let value_to_add_end = line[line.len() - 1];
-            let mut value_to_subtract = line[start_idx - 1];
-            (start_idx..line.len()).for_each(|idx| {
-                let new_value = line[idx] - value_to_subtract;
-                value_to_subtract = line[idx];
-                line[idx] = new_value;
-            });
-            start_idx += 1;
-            acc += value_to_add_end;
-        }
-        part1 += acc;
-    }
+    let part1 = lines
+        .clone()
+        .iter()
+        .map(|line| get_extrapolated_value_from_line(line.clone(), false))
+        .sum();
 
-    let mut part2 = 0;
-    for mut line in lines {
-        let mut start_idx = 1;
-        let mut start_values: Vec<i32> = Vec::new();
-        while *line.last().unwrap() != 0 {
-            start_values.push(line[start_idx - 1]);
-            let mut value_to_subtract = line[start_idx - 1];
-            (start_idx..line.len()).for_each(|idx| {
-                let new_value = line[idx] - value_to_subtract;
-                value_to_subtract = line[idx];
-                line[idx] = new_value;
-            });
-            start_idx += 1;
-        }
-        part2 += start_values.iter().rev().fold(0, |acc, n| n - acc);
-    }
+    let part2 = lines
+        .clone()
+        .iter()
+        .map(|line| get_extrapolated_value_from_line(line.clone(), true))
+        .sum();
+
     (part1, part2)
 }
 
