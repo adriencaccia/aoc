@@ -40,6 +40,52 @@ impl Tile {
             Tile::Inside => '█',
         }
     }
+
+    pub fn to_pixels(&self) -> [[bool; 3]; 3] {
+        match self {
+            Tile::Horizontal => [
+                [false, false, false],
+                [true, true, true],
+                [false, false, false],
+            ],
+            Tile::Vertical => [
+                [false, true, false],
+                [false, true, false],
+                [false, true, false],
+            ],
+            Tile::Ground => [
+                [false, false, false],
+                [false, false, false],
+                [false, false, false],
+            ],
+            Tile::NorthEastBend => [
+                [false, true, false],
+                [false, true, true],
+                [false, false, false],
+            ],
+            Tile::NorthWestBend => [
+                [false, true, false],
+                [true, true, false],
+                [false, false, false],
+            ],
+            Tile::SouthEastBend => [
+                [false, false, false],
+                [false, true, true],
+                [false, true, false],
+            ],
+            Tile::SouthWestBend => [
+                [false, false, false],
+                [true, true, false],
+                [false, true, false],
+            ],
+            Tile::StartingPosition => [
+                [false, true, false],
+                [true, true, true],
+                [false, true, false],
+            ],
+            Tile::Inside => [[true; 3]; 3],
+        }
+    }
 }
 
 fn find_starting_position(grid: &[Vec<Tile>]) -> (usize, usize) {
@@ -163,11 +209,55 @@ fn clean_grid(grid: &mut [Vec<Tile>], loop_path: HashSet<(usize, usize)>) {
 
 #[cfg(debug_assertions)]
 fn print_grid(grid: &[Vec<Tile>]) {
-    println!("Printing grid");
+    use std::ffi::OsStr;
+
+    use image::{ImageBuffer, Rgb};
 
     for line in grid {
         println!("{}", line.iter().map(|t| t.to_symbol()).join(""));
     }
+
+    // create a png from the grid, with each tile being 3x3 pixels
+    let tile_size = 3;
+    let mut imgbuf = ImageBuffer::new(
+        grid.len() as u32 * tile_size,
+        grid[0].len() as u32 * tile_size,
+    );
+    let background_color = Rgb([40, 40, 40]);
+    for (x, grid_line) in grid.iter().enumerate() {
+        for (y, tile) in grid_line.iter().enumerate() {
+            let color: Rgb<u8> = match tile {
+                Tile::Inside => Rgb([51, 55, 180]),
+                Tile::Ground => background_color,
+                Tile::StartingPosition => Rgb([215, 215, 215]),
+                _ => Rgb([159, 86, 146]),
+            };
+            let tile_pixels_map = tile.to_pixels();
+            for (i, line) in tile_pixels_map.iter().enumerate() {
+                for (j, should_color_pixel) in line.iter().enumerate() {
+                    let pixel_color = if *should_color_pixel {
+                        color
+                    } else {
+                        background_color
+                    };
+                    imgbuf.put_pixel(
+                        x as u32 * tile_size + i as u32,
+                        y as u32 * tile_size + j as u32,
+                        pixel_color,
+                    );
+                }
+            }
+        }
+    }
+    // save the image in same directory as this file
+    let current_dir = std::env::current_dir().unwrap();
+    let image_dir = match current_dir.file_name() {
+        Some(name) if name == OsStr::new("aoc") => {
+            current_dir.join("2023").join("src").join("day10")
+        }
+        _ => current_dir.join("src").join("day10"),
+    };
+    imgbuf.save(image_dir.join("grid.png")).unwrap();
 }
 
 fn parse_input(input: &str) -> (u32, u32) {
