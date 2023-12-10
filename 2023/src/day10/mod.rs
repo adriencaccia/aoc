@@ -22,6 +22,21 @@ enum Tile {
     StartingPosition,
 }
 
+impl Tile {
+    pub fn to_symbol(&self) -> char {
+        match self {
+            Tile::Horizontal => '─',
+            Tile::Vertical => '│',
+            Tile::Ground => '.',
+            Tile::NorthEastBend => '└',
+            Tile::NorthWestBend => '┘',
+            Tile::SouthEastBend => '┌',
+            Tile::SouthWestBend => '┐',
+            Tile::StartingPosition => 'S',
+        }
+    }
+}
+
 fn find_starting_position(grid: &[Vec<Tile>]) -> (usize, usize) {
     for (x, grid_line) in grid.iter().enumerate() {
         for (y, tile) in grid_line.iter().enumerate() {
@@ -40,7 +55,7 @@ lazy_static! {
 }
 
 fn get_next_position(
-    grid: &[Vec<Tile>],
+    grid: &mut [Vec<Tile>],
     current_position: (usize, usize),
     previous_position: (usize, usize),
 ) -> (usize, usize) {
@@ -66,7 +81,6 @@ fn get_next_position(
             (-1, 0, Tile::StartingPosition, Tile::Vertical) => return new_position,
             (-1, 0, Tile::StartingPosition, Tile::SouthEastBend) => return new_position,
             (-1, 0, Tile::StartingPosition, Tile::SouthWestBend) => return new_position,
-            (-1, 0, Tile::StartingPosition, Tile::StartingPosition) => return new_position,
             (-1, 0, Tile::Vertical, Tile::Vertical) => return new_position,
             (-1, 0, Tile::Vertical, Tile::SouthEastBend) => return new_position,
             (-1, 0, Tile::Vertical, Tile::SouthWestBend) => return new_position,
@@ -83,7 +97,6 @@ fn get_next_position(
             (0, 1, Tile::StartingPosition, Tile::Horizontal) => return new_position,
             (0, 1, Tile::StartingPosition, Tile::NorthWestBend) => return new_position,
             (0, 1, Tile::StartingPosition, Tile::SouthWestBend) => return new_position,
-            (0, 1, Tile::StartingPosition, Tile::StartingPosition) => return new_position,
             (0, 1, Tile::Horizontal, Tile::Horizontal) => return new_position,
             (0, 1, Tile::Horizontal, Tile::NorthWestBend) => return new_position,
             (0, 1, Tile::Horizontal, Tile::SouthWestBend) => return new_position,
@@ -100,7 +113,6 @@ fn get_next_position(
             (1, 0, Tile::StartingPosition, Tile::Vertical) => return new_position,
             (1, 0, Tile::StartingPosition, Tile::NorthEastBend) => return new_position,
             (1, 0, Tile::StartingPosition, Tile::NorthWestBend) => return new_position,
-            (1, 0, Tile::StartingPosition, Tile::StartingPosition) => return new_position,
             (1, 0, Tile::Vertical, Tile::Vertical) => return new_position,
             (1, 0, Tile::Vertical, Tile::NorthEastBend) => return new_position,
             (1, 0, Tile::Vertical, Tile::NorthWestBend) => return new_position,
@@ -117,7 +129,6 @@ fn get_next_position(
             (0, -1, Tile::StartingPosition, Tile::Horizontal) => return new_position,
             (0, -1, Tile::StartingPosition, Tile::NorthEastBend) => return new_position,
             (0, -1, Tile::StartingPosition, Tile::SouthEastBend) => return new_position,
-            (0, -1, Tile::StartingPosition, Tile::StartingPosition) => return new_position,
             (0, -1, Tile::Horizontal, Tile::Horizontal) => return new_position,
             (0, -1, Tile::Horizontal, Tile::NorthEastBend) => return new_position,
             (0, -1, Tile::Horizontal, Tile::SouthEastBend) => return new_position,
@@ -137,8 +148,28 @@ fn get_next_position(
     unreachable!()
 }
 
+fn clean_grid(grid: &mut [Vec<Tile>], loop_path: Vec<(usize, usize)>) {
+    for x in 0..grid.len() {
+        for y in 0..grid[0].len() {
+            if !loop_path.contains(&(x, y)) {
+                grid[x][y] = Tile::Ground;
+            }
+        }
+    }
+    // TODO: clean start tile, here it is hardcoded because it is always this one in all the examples and my input
+    grid[loop_path[0].0][loop_path[0].1] = Tile::SouthEastBend;
+}
+
+fn print_grid(grid: &[Vec<Tile>]) {
+    println!("Printing grid");
+
+    for line in grid {
+        println!("{}", line.iter().map(|t| t.to_symbol()).join(""));
+    }
+}
+
 fn parse_input(input: &str) -> (u32, u32) {
-    let grid: Vec<Vec<Tile>> = input
+    let mut grid: Vec<Vec<Tile>> = input
         .trim()
         .lines()
         .map(|line| {
@@ -149,21 +180,48 @@ fn parse_input(input: &str) -> (u32, u32) {
         .collect_vec();
 
     let start_position = find_starting_position(&grid);
-    let mut part1 = 0;
-    let mut previous_position = (0, 0);
-    let mut current_position = start_position;
+    let mut loop_path: Vec<(usize, usize)> = vec![start_position];
+    let mut steps = 0;
     loop {
-        let next_position = get_next_position(&grid, current_position, previous_position);
-        part1 += 1;
+        let previous_position = if steps == 0 {
+            (0, 0)
+        } else {
+            loop_path[steps - 1]
+        };
+        let next_position = get_next_position(&mut grid, loop_path[steps], previous_position);
+        steps += 1;
         if next_position == start_position {
             break;
         }
-        previous_position = current_position;
-        current_position = next_position;
+        loop_path.push(next_position);
     }
-    part1 /= 2;
+    let part1 = (steps as u32) / 2;
 
-    let part2 = 0;
+    print_grid(&grid);
+    clean_grid(&mut grid, loop_path);
+    print_grid(&grid);
+
+    let mut inside_tiles: Vec<(usize, usize)> = Vec::new();
+    for x in 0..grid.len() {
+        let mut inside = false;
+        for y in 0..grid[0].len() {
+            let tile = &grid[x][y];
+
+            match (tile, inside) {
+                (Tile::Vertical, false) => inside = true,
+                (Tile::SouthEastBend, false) => inside = true,
+                (Tile::SouthWestBend, false) => inside = true,
+                (_, false) => continue,
+                (Tile::Ground, true) => inside_tiles.push((x, y)),
+                (Tile::Vertical, true) => inside = false,
+                (Tile::SouthEastBend, true) => inside = false,
+                (Tile::SouthWestBend, true) => inside = false,
+                _ => continue,
+            }
+        }
+    }
+
+    let part2 = inside_tiles.len() as u32;
     (part1, part2)
 }
 
@@ -194,7 +252,59 @@ mod tests {
         let (part1, part2) = parse_input(EXAMPLE_INPUT);
 
         assert_eq!(part1, 8);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 1);
+    }
+
+    #[test]
+    fn test_part2_1() {
+        let (_, part2) = parse_input(indoc! {"
+            ...........
+            .S-------7.
+            .|F-----7|.
+            .||.....||.
+            .||.....||.
+            .|L-7.F-J|.
+            .|..|.|..|.
+            .L--J.L--J.
+            ...........
+        "});
+
+        assert_eq!(part2, 4);
+    }
+    #[test]
+
+    fn test_part2_2() {
+        let (_, part2) = parse_input(indoc! {"
+            .F----7F7F7F7F-7....
+            .|F--7||||||||FJ....
+            .||.FJ||||||||L7....
+            FJL7L7LJLJ||LJ.L-7..
+            L--J.L7...LJS7F-7L7.
+            ....F-J..F7FJ|L7L7L7
+            ....L7.F7||L7|.L7L7|
+            .....|FJLJ|FJ|F7|.LJ
+            ....FJL-7.||.||||...
+            ....L---J.LJ.LJLJ...
+        "});
+
+        assert_eq!(part2, 8);
+    }
+    #[test]
+    fn test_part2_3() {
+        let (_, part2) = parse_input(indoc! {"
+            FF7FSF7F7F7F7F7F---7
+            L|LJ||||||||||||F--J
+            FL-7LJLJ||||||LJL-77
+            F--JF--7||LJLJ7F7FJ-
+            L---JF-JLJ.||-FJLJJ7
+            |F|F-JF---7F7-L7L|7|
+            |FFJF7L7F-JF7|JL---7
+            7-L-JL7||F7|L7F-7F7|
+            L.L7LFJ|||||FJL7||LJ
+            L7JLJL-JLJLJL--JLJ.L
+        "});
+
+        assert_eq!(part2, 10);
     }
 
     #[test]
@@ -202,6 +312,6 @@ mod tests {
         let (part1, part2) = main();
 
         assert_eq!(part1, 6754);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 567);
     }
 }
