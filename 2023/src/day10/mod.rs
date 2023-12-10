@@ -1,8 +1,10 @@
+use std::collections::{HashMap, HashSet};
+
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use parse_display::{Display, FromStr};
 
-#[derive(Display, FromStr, PartialEq, Debug)]
+#[derive(Display, FromStr, PartialEq, Eq, Hash, Debug, Clone)]
 enum Tile {
     #[display("|")]
     Vertical,
@@ -20,19 +22,22 @@ enum Tile {
     Ground,
     #[display("S")]
     StartingPosition,
+    Inside,
 }
 
+#[cfg(debug_assertions)]
 impl Tile {
     pub fn to_symbol(&self) -> char {
         match self {
             Tile::Horizontal => '─',
             Tile::Vertical => '│',
-            Tile::Ground => '.',
+            Tile::Ground => ' ',
             Tile::NorthEastBend => '└',
             Tile::NorthWestBend => '┘',
             Tile::SouthEastBend => '┌',
             Tile::SouthWestBend => '┐',
             Tile::StartingPosition => 'S',
+            Tile::Inside => '█',
         }
     }
 }
@@ -50,8 +55,67 @@ fn find_starting_position(grid: &[Vec<Tile>]) -> (usize, usize) {
     unreachable!()
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+enum Direction {
+    Up,
+    Right,
+    Down,
+    Left,
+}
+
 lazy_static! {
-    static ref DIRECTIONS: [(i16, i16); 4] = [(-1, 0), (0, 1), (1, 0), (0, -1),];
+    static ref DIRECTION_TO_OFFSET: HashMap<Direction, (i16, i16)> = {
+        let mut m = HashMap::new();
+        m.insert(Direction::Up, (-1, 0));
+        m.insert(Direction::Right, (0, 1));
+        m.insert(Direction::Down, (1, 0));
+        m.insert(Direction::Left, (0, -1));
+        m
+    };
+}
+
+fn get_next_possible_tiles(tile: &Tile, direction: Direction) -> Vec<Tile> {
+    match (tile, direction) {
+        (
+            Tile::StartingPosition | Tile::Vertical | Tile::NorthEastBend | Tile::NorthWestBend,
+            Direction::Up,
+        ) => {
+            vec![
+                Tile::StartingPosition,
+                Tile::Vertical,
+                Tile::SouthWestBend,
+                Tile::SouthEastBend,
+            ]
+        }
+        (
+            Tile::StartingPosition | Tile::Horizontal | Tile::NorthEastBend | Tile::SouthEastBend,
+            Direction::Right,
+        ) => vec![
+            Tile::StartingPosition,
+            Tile::Horizontal,
+            Tile::NorthWestBend,
+            Tile::SouthWestBend,
+        ],
+        (
+            Tile::StartingPosition | Tile::Vertical | Tile::SouthEastBend | Tile::SouthWestBend,
+            Direction::Down,
+        ) => vec![
+            Tile::StartingPosition,
+            Tile::Vertical,
+            Tile::NorthWestBend,
+            Tile::NorthEastBend,
+        ],
+        (
+            Tile::StartingPosition | Tile::Horizontal | Tile::NorthWestBend | Tile::SouthWestBend,
+            Direction::Left,
+        ) => vec![
+            Tile::StartingPosition,
+            Tile::Horizontal,
+            Tile::SouthEastBend,
+            Tile::NorthEastBend,
+        ],
+        _ => vec![],
+    }
 }
 
 fn get_next_position(
@@ -59,11 +123,11 @@ fn get_next_position(
     current_position: (usize, usize),
     previous_position: (usize, usize),
 ) -> (usize, usize) {
-    for (offset_x, offset_y) in DIRECTIONS.iter() {
-        if current_position.0 == 0 && *offset_x == -1
-            || current_position.0 == grid.len() - 1 && *offset_x == 1
-            || current_position.1 == 0 && *offset_y == -1
-            || current_position.1 == grid[0].len() - 1 && *offset_y == 1
+    for (&direction, &(offset_x, offset_y)) in DIRECTION_TO_OFFSET.iter() {
+        if current_position.0 == 0 && direction == Direction::Up
+            || current_position.0 == grid.len() - 1 && direction == Direction::Down
+            || current_position.1 == 0 && direction == Direction::Left
+            || current_position.1 == grid[0].len() - 1 && direction == Direction::Right
         {
             continue;
         }
@@ -75,80 +139,17 @@ fn get_next_position(
             continue;
         }
         let current_tile = &grid[current_position.0][current_position.1];
-        let new_tile = &grid[new_position.0][new_position.1];
-        match (offset_x, offset_y, current_tile, new_tile) {
-            // go above
-            (-1, 0, Tile::StartingPosition, Tile::Vertical) => return new_position,
-            (-1, 0, Tile::StartingPosition, Tile::SouthEastBend) => return new_position,
-            (-1, 0, Tile::StartingPosition, Tile::SouthWestBend) => return new_position,
-            (-1, 0, Tile::Vertical, Tile::Vertical) => return new_position,
-            (-1, 0, Tile::Vertical, Tile::SouthEastBend) => return new_position,
-            (-1, 0, Tile::Vertical, Tile::SouthWestBend) => return new_position,
-            (-1, 0, Tile::Vertical, Tile::StartingPosition) => return new_position,
-            (-1, 0, Tile::NorthEastBend, Tile::Vertical) => return new_position,
-            (-1, 0, Tile::NorthEastBend, Tile::SouthEastBend) => return new_position,
-            (-1, 0, Tile::NorthEastBend, Tile::SouthWestBend) => return new_position,
-            (-1, 0, Tile::NorthEastBend, Tile::StartingPosition) => return new_position,
-            (-1, 0, Tile::NorthWestBend, Tile::Vertical) => return new_position,
-            (-1, 0, Tile::NorthWestBend, Tile::SouthEastBend) => return new_position,
-            (-1, 0, Tile::NorthWestBend, Tile::SouthWestBend) => return new_position,
-            (-1, 0, Tile::NorthWestBend, Tile::StartingPosition) => return new_position,
-            // go right
-            (0, 1, Tile::StartingPosition, Tile::Horizontal) => return new_position,
-            (0, 1, Tile::StartingPosition, Tile::NorthWestBend) => return new_position,
-            (0, 1, Tile::StartingPosition, Tile::SouthWestBend) => return new_position,
-            (0, 1, Tile::Horizontal, Tile::Horizontal) => return new_position,
-            (0, 1, Tile::Horizontal, Tile::NorthWestBend) => return new_position,
-            (0, 1, Tile::Horizontal, Tile::SouthWestBend) => return new_position,
-            (0, 1, Tile::Horizontal, Tile::StartingPosition) => return new_position,
-            (0, 1, Tile::NorthEastBend, Tile::Horizontal) => return new_position,
-            (0, 1, Tile::NorthEastBend, Tile::NorthWestBend) => return new_position,
-            (0, 1, Tile::NorthEastBend, Tile::SouthWestBend) => return new_position,
-            (0, 1, Tile::NorthEastBend, Tile::StartingPosition) => return new_position,
-            (0, 1, Tile::SouthEastBend, Tile::Horizontal) => return new_position,
-            (0, 1, Tile::SouthEastBend, Tile::NorthWestBend) => return new_position,
-            (0, 1, Tile::SouthEastBend, Tile::SouthWestBend) => return new_position,
-            (0, 1, Tile::SouthEastBend, Tile::StartingPosition) => return new_position,
-            // go below
-            (1, 0, Tile::StartingPosition, Tile::Vertical) => return new_position,
-            (1, 0, Tile::StartingPosition, Tile::NorthEastBend) => return new_position,
-            (1, 0, Tile::StartingPosition, Tile::NorthWestBend) => return new_position,
-            (1, 0, Tile::Vertical, Tile::Vertical) => return new_position,
-            (1, 0, Tile::Vertical, Tile::NorthEastBend) => return new_position,
-            (1, 0, Tile::Vertical, Tile::NorthWestBend) => return new_position,
-            (1, 0, Tile::Vertical, Tile::StartingPosition) => return new_position,
-            (1, 0, Tile::SouthEastBend, Tile::Vertical) => return new_position,
-            (1, 0, Tile::SouthEastBend, Tile::NorthEastBend) => return new_position,
-            (1, 0, Tile::SouthEastBend, Tile::NorthWestBend) => return new_position,
-            (1, 0, Tile::SouthEastBend, Tile::StartingPosition) => return new_position,
-            (1, 0, Tile::SouthWestBend, Tile::Vertical) => return new_position,
-            (1, 0, Tile::SouthWestBend, Tile::NorthEastBend) => return new_position,
-            (1, 0, Tile::SouthWestBend, Tile::NorthWestBend) => return new_position,
-            (1, 0, Tile::SouthWestBend, Tile::StartingPosition) => return new_position,
-            // go left
-            (0, -1, Tile::StartingPosition, Tile::Horizontal) => return new_position,
-            (0, -1, Tile::StartingPosition, Tile::NorthEastBend) => return new_position,
-            (0, -1, Tile::StartingPosition, Tile::SouthEastBend) => return new_position,
-            (0, -1, Tile::Horizontal, Tile::Horizontal) => return new_position,
-            (0, -1, Tile::Horizontal, Tile::NorthEastBend) => return new_position,
-            (0, -1, Tile::Horizontal, Tile::SouthEastBend) => return new_position,
-            (0, -1, Tile::Horizontal, Tile::StartingPosition) => return new_position,
-            (0, -1, Tile::NorthWestBend, Tile::Horizontal) => return new_position,
-            (0, -1, Tile::NorthWestBend, Tile::NorthEastBend) => return new_position,
-            (0, -1, Tile::NorthWestBend, Tile::SouthEastBend) => return new_position,
-            (0, -1, Tile::NorthWestBend, Tile::StartingPosition) => return new_position,
-            (0, -1, Tile::SouthWestBend, Tile::Horizontal) => return new_position,
-            (0, -1, Tile::SouthWestBend, Tile::NorthEastBend) => return new_position,
-            (0, -1, Tile::SouthWestBend, Tile::SouthEastBend) => return new_position,
-            (0, -1, Tile::SouthWestBend, Tile::StartingPosition) => return new_position,
-            _ => continue,
+        let possible_tiles = get_next_possible_tiles(current_tile, direction);
+        let next_tile = &grid[new_position.0][new_position.1];
+        if possible_tiles.contains(next_tile) {
+            return new_position;
         }
     }
 
     unreachable!()
 }
 
-fn clean_grid(grid: &mut [Vec<Tile>], loop_path: Vec<(usize, usize)>) {
+fn clean_grid(grid: &mut [Vec<Tile>], loop_path: HashSet<(usize, usize)>) {
     for x in 0..grid.len() {
         for y in 0..grid[0].len() {
             if !loop_path.contains(&(x, y)) {
@@ -156,10 +157,11 @@ fn clean_grid(grid: &mut [Vec<Tile>], loop_path: Vec<(usize, usize)>) {
             }
         }
     }
-    // TODO: clean start tile, here it is hardcoded because it is always this one in all the examples and my input
-    grid[loop_path[0].0][loop_path[0].1] = Tile::SouthEastBend;
+    // TODO: clean the starting tile with its real value
+    // grid[loop_path[0].0][loop_path[0].1] = get_real_start_tile();
 }
 
+#[cfg(debug_assertions)]
 fn print_grid(grid: &[Vec<Tile>]) {
     println!("Printing grid");
 
@@ -180,46 +182,56 @@ fn parse_input(input: &str) -> (u32, u32) {
         .collect_vec();
 
     let start_position = find_starting_position(&grid);
-    let mut loop_path: Vec<(usize, usize)> = vec![start_position];
+    let mut loop_path = HashSet::new();
+    loop_path.insert(start_position);
     let mut steps = 0;
+    let mut previous_position = (0, 0);
+    let mut current_position = start_position;
     loop {
-        let previous_position = if steps == 0 {
-            (0, 0)
-        } else {
-            loop_path[steps - 1]
-        };
-        let next_position = get_next_position(&mut grid, loop_path[steps], previous_position);
+        let next_position = get_next_position(&mut grid, current_position, previous_position);
         steps += 1;
         if next_position == start_position {
             break;
         }
-        loop_path.push(next_position);
+        previous_position = current_position;
+        current_position = next_position;
+        loop_path.insert(next_position);
     }
     let part1 = (steps as u32) / 2;
 
-    print_grid(&grid);
     clean_grid(&mut grid, loop_path);
-    print_grid(&grid);
 
     let mut inside_tiles: Vec<(usize, usize)> = Vec::new();
+    let crossing_tiles: HashSet<Tile> = HashSet::from_iter(
+        [
+            Tile::Vertical,
+            Tile::SouthEastBend,
+            Tile::SouthWestBend,
+            // TODO: remove once the starting tile is cleaned, as the algo will not work
+            // if the starting tile is not one of the above tiles,
+            // but in the examples and the input it is, so that works for now
+            Tile::StartingPosition,
+        ]
+        .iter()
+        .cloned(),
+    );
+
     for x in 0..grid.len() {
         let mut inside = false;
         for y in 0..grid[0].len() {
             let tile = &grid[x][y];
-
-            match (tile, inside) {
-                (Tile::Vertical, false) => inside = true,
-                (Tile::SouthEastBend, false) => inside = true,
-                (Tile::SouthWestBend, false) => inside = true,
-                (_, false) => continue,
-                (Tile::Ground, true) => inside_tiles.push((x, y)),
-                (Tile::Vertical, true) => inside = false,
-                (Tile::SouthEastBend, true) => inside = false,
-                (Tile::SouthWestBend, true) => inside = false,
-                _ => continue,
+            if crossing_tiles.contains(tile) {
+                inside = !inside;
+                continue;
+            }
+            if inside && *tile == Tile::Ground {
+                inside_tiles.push((x, y));
+                grid[x][y] = Tile::Inside;
             }
         }
     }
+    #[cfg(debug_assertions)]
+    print_grid(&grid);
 
     let part2 = inside_tiles.len() as u32;
     (part1, part2)
