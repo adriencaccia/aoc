@@ -33,10 +33,11 @@ fn parse_input(input: &str) -> (u32, usize) {
         }
     }
 
+    let replacement_count = 999999;
+
     let counts: (Vec<u32>, Vec<usize>) = galaxies
-        .clone()
         .iter()
-        .cartesian_product(galaxies.iter())
+        .tuple_combinations::<(_, _)>()
         .filter_map(|(&(x1, y1), &(x2, y2))| {
             if x1 == x2 && y1 == y2 {
                 return None;
@@ -48,12 +49,15 @@ fn parse_input(input: &str) -> (u32, usize) {
 
             Some((
                 (x_range.len() + x_to_add + y_range.len() + y_to_add) as u32,
-                (x_range.len() + x_to_add * 999999 + y_range.len() + y_to_add * 999999),
+                (x_range.len()
+                    + x_to_add * replacement_count
+                    + y_range.len()
+                    + y_to_add * replacement_count),
             ))
         })
         .unzip();
-    let part1 = counts.0.iter().sum::<u32>() / 2;
-    let part2 = counts.1.iter().sum::<usize>() / 2;
+    let part1 = counts.0.iter().sum::<u32>();
+    let part2 = counts.1.iter().sum::<usize>();
     (part1, part2)
 }
 
