@@ -2,46 +2,27 @@ use std::collections::HashSet;
 
 use itertools::Itertools;
 
-#[cfg(debug_assertions)]
-fn print_grid(grid: &[Vec<char>]) {
-    println!();
-    for line in grid {
-        println!("{}", line.iter().join(""));
-    }
-}
-
-fn parse_input(input: &str) -> (u32, u32) {
-    let mut grid = input
+fn parse_input(input: &str) -> (u32, usize) {
+    let grid = input
         .trim()
         .lines()
         .map(|line| line.chars().collect_vec())
         .collect_vec();
 
-    print_grid(&grid);
-
-    let mut inserted_x = 0;
-    for x in 0..grid.len() {
-        if grid[x + inserted_x].iter().all(|&c| c == '.') {
-            grid.insert(x + inserted_x, grid[x + inserted_x].clone());
-            inserted_x += 1;
+    let mut empty_x: HashSet<usize> = HashSet::new();
+    (0..grid.len()).for_each(|x| {
+        if grid[x].iter().all(|&c| c == '.') {
+            empty_x.insert(x);
         }
-    }
-    print_grid(&grid);
+    });
 
-    let mut inserted_y = 0;
+    let mut empty_y: HashSet<usize> = HashSet::new();
     for y in 0..grid[0].len() {
-        let line = (0..grid.len())
-            .map(|x| grid[x][y + inserted_y])
-            .collect_vec();
+        let line = (0..grid.len()).map(|x| grid[x][y]).collect_vec();
         if line.iter().all(|&c| c == '.') {
-            (0..grid.len()).for_each(|x| {
-                grid[x].insert(y + inserted_y, '.');
-            });
-            inserted_y += 1;
+            empty_y.insert(y);
         }
     }
-
-    print_grid(&grid);
 
     let mut galaxies: HashSet<(usize, usize)> = HashSet::new();
     for x in 0..grid.len() {
@@ -52,7 +33,7 @@ fn parse_input(input: &str) -> (u32, u32) {
         }
     }
 
-    let mut part1 = galaxies
+    let counts: (Vec<u32>, Vec<usize>) = galaxies
         .clone()
         .iter()
         .cartesian_product(galaxies.iter())
@@ -60,16 +41,23 @@ fn parse_input(input: &str) -> (u32, u32) {
             if x1 == x2 && y1 == y2 {
                 return None;
             }
-            Some((x1.abs_diff(x2) + y1.abs_diff(y2)) as u32)
-        })
-        .sum();
-    part1 /= 2;
+            let x_range = x1.min(x2)..x1.max(x2);
+            let x_to_add = empty_x.iter().filter(|x| x_range.contains(x)).count();
+            let y_range = y1.min(y2)..y1.max(y2);
+            let y_to_add = empty_y.iter().filter(|y| y_range.contains(y)).count();
 
-    let part2 = 0;
+            Some((
+                (x_range.len() + x_to_add + y_range.len() + y_to_add) as u32,
+                (x_range.len() + x_to_add * 999999 + y_range.len() + y_to_add * 999999),
+            ))
+        })
+        .unzip();
+    let part1 = counts.0.iter().sum::<u32>() / 2;
+    let part2 = counts.1.iter().sum::<usize>() / 2;
     (part1, part2)
 }
 
-pub fn main() -> (u32, u32) {
+pub fn main() -> (u32, usize) {
     let (part1, part2) = parse_input(include_str!("input.txt"));
     println!("part1 {}", part1);
     println!("part2 {}", part2);
@@ -101,7 +89,7 @@ mod tests {
         let (part1, part2) = parse_input(EXAMPLE_INPUT);
 
         assert_eq!(part1, 374);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 82000210);
     }
 
     #[test]
@@ -109,6 +97,6 @@ mod tests {
         let (part1, part2) = main();
 
         assert_eq!(part1, 9591768);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 746962097860);
     }
 }
