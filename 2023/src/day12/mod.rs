@@ -68,7 +68,8 @@ fn parse_input(input: &str) -> (u64, u64) {
     let part2 = lines
         .map(|(springs, groups)| {
             let unfolded_springs = (0..5).map(|_| springs).join("?");
-            let unfolded_groups = vec![groups; 5].concat();
+            let new_len = groups.len() * 5;
+            let unfolded_groups = groups.into_iter().cycle().take(new_len).collect_vec();
             let mut solves: HashMap<(&str, &[usize]), u64> = HashMap::new();
             count_configs(
                 unfolded_springs.as_str(),
