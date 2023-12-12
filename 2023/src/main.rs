@@ -11,6 +11,7 @@ mod day08;
 mod day09;
 mod day10;
 mod day11;
+mod day12;
 
 const N_DAYS: u8 = 25;
 
@@ -47,6 +48,10 @@ fn run_day(day: u8) {
         10 => day10::main(),
         11 => {
             day11::main();
+            (0, 0)
+        }
+        12 => {
+            day12::main();
             (0, 0)
         }
         _ => Default::default(),
