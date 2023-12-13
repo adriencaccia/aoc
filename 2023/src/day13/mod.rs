@@ -1,11 +1,9 @@
 use itertools::Itertools;
 
-fn get_reflection_line(grid: Vec<&str>) -> (u32, bool) {
-    let rows = grid
-        .iter()
-        .enumerate()
+fn get_reflection_line(grid: Vec<&str>) -> u32 {
+    let rows = (0..grid.len())
         .tuple_windows()
-        .find(|((i, _), (j, _))| {
+        .find(|(i, j)| {
             // check it could be a reflection by iterating out
             for x in 0..=(grid.len() - j - 1).min(*i) {
                 if grid[i - x] != grid[j + x] {
@@ -15,10 +13,10 @@ fn get_reflection_line(grid: Vec<&str>) -> (u32, bool) {
 
             true
         })
-        .map_or(0, |((_, _), (rows, _))| rows as u32 * 100);
+        .map_or(0, |(_, j)| j as u32 * 100);
 
     if rows != 0 {
-        return (rows, true);
+        return rows;
     }
 
     let columns = (0..grid[0].len())
@@ -33,22 +31,15 @@ fn get_reflection_line(grid: Vec<&str>) -> (u32, bool) {
             }
             true
         })
-        .map_or(0, |(i, _)| i + 1);
+        .map_or(0, |(_, j)| j);
 
-    (columns as u32, false)
+    columns as u32
 }
 
 fn get_reflection_line_with_smudge(grid: Vec<&str>) -> u32 {
-    let (value, is_row) = get_reflection_line(grid.clone());
-
-    let rows = grid
-        .iter()
-        .enumerate()
+    let rows = (0..grid.len())
         .tuple_windows()
-        .find(|((i, _), (j, _))| {
-            if is_row && value / 100 == *j as u32 {
-                return false;
-            }
+        .find(|(i, j)| {
             let mut smudge_used = false;
             // check it could be a reflection by iterating out
             for x in 0..=(grid.len() - j - 1).min(*i) {
@@ -64,10 +55,9 @@ fn get_reflection_line_with_smudge(grid: Vec<&str>) -> u32 {
                     }
                 }
             }
-
-            true
+            smudge_used
         })
-        .map_or(0, |((_, _), (rows, _))| rows as u32 * 100);
+        .map_or(0, |(_, j)| j as u32 * 100);
 
     if rows != 0 {
         return rows;
@@ -76,9 +66,6 @@ fn get_reflection_line_with_smudge(grid: Vec<&str>) -> u32 {
     let columns = (0..grid[0].len())
         .tuple_windows()
         .find(|(i, j)| {
-            if !is_row && value == *i as u32 + 1 {
-                return false;
-            }
             let mut smudge_used = false;
             for y in 0..=(grid[0].len() - j - 1).min(*i) {
                 let column_i = grid.iter().map(|l| l.chars().nth(i - y).unwrap()).join("");
@@ -95,9 +82,9 @@ fn get_reflection_line_with_smudge(grid: Vec<&str>) -> u32 {
                     }
                 }
             }
-            true
+            smudge_used
         })
-        .map_or(0, |(i, _)| i + 1);
+        .map_or(0, |(_, j)| j);
 
     columns as u32
 }
@@ -105,7 +92,7 @@ fn get_reflection_line_with_smudge(grid: Vec<&str>) -> u32 {
 fn parse_input(input: &str) -> (u32, u32) {
     let grids = input.trim().split("\n\n").map(|g| g.lines().collect_vec());
 
-    let part1 = grids.clone().map(|grid| get_reflection_line(grid).0).sum();
+    let part1 = grids.clone().map(get_reflection_line).sum();
     let part2 = grids.map(get_reflection_line_with_smudge).sum();
     (part1, part2)
 }
