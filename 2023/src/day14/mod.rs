@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 use itertools::Itertools;
 use parse_display::{Display, FromStr};
@@ -103,27 +103,35 @@ fn do_cycle(grid: &mut Vec<Vec<Tile>>) {
     }
 }
 
-fn find_sequence(numbers: &Vec<u32>) -> (usize, usize) {
-    for start in 0..numbers.len() {
-        for cycle_length in 1..(numbers.len() - start) {
-            let pattern = &numbers[start..start + cycle_length];
-            for i in 0..5 {
-                let new_start = start + i * cycle_length;
-                let new_end = new_start + cycle_length;
-                if new_end > numbers.len() {
-                    continue;
-                }
-                if pattern == &numbers[new_start..new_end] {
-                    if i == 4 {
-                        return (start, cycle_length);
-                    }
-                    continue;
-                }
-                break;
-            }
+fn part2(mut grid: Vec<Vec<Tile>>) -> u32 {
+    let mut grids: HashMap<String, (usize, u32)> = HashMap::new();
+    let mut idx = 0;
+
+    loop {
+        do_cycle(&mut grid);
+        idx += 1;
+
+        let grid_str = grid.iter().map(|l| l.iter().join("")).join("\n");
+        if let Some((cycle_start, _)) = grids.get(&grid_str) {
+            let cycle_length = idx - cycle_start;
+            let grid_idx = cycle_start + (1000000000 - cycle_start) % cycle_length;
+
+            return grids
+                .iter()
+                .find_map(
+                    |(_, &(idx, load))| {
+                        if idx == grid_idx {
+                            Some(load)
+                        } else {
+                            None
+                        }
+                    },
+                )
+                .unwrap();
         }
+
+        grids.insert(grid_str, (idx, get_load(&grid)));
     }
-    unreachable!()
 }
 
 fn parse_input(input: &str) -> (u32, u32) {
@@ -137,24 +145,12 @@ fn parse_input(input: &str) -> (u32, u32) {
         })
         .collect_vec();
 
-    let mut grid_p2 = grid.clone();
+    let grid_p2 = grid.clone();
 
     tilt_grid(&mut grid, Direction::North);
     let part1 = get_load(&grid);
+    let part2 = part2(grid_p2);
 
-    // TODO: optimize to not have to randomly select 400
-    let loads = (1..400)
-        .map(|_| {
-            do_cycle(&mut grid_p2);
-            get_load(&grid_p2)
-        })
-        .collect_vec();
-
-    let (cycle_start, cycle_length) = find_sequence(&loads);
-
-    let remainder = (1000000000 - cycle_start) % cycle_length;
-
-    let part2 = loads[cycle_start - 1 + remainder];
     (part1, part2)
 }
 
