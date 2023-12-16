@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use itertools::Itertools;
 use parse_display::{Display, FromStr};
 use rayon::prelude::*;
@@ -26,9 +24,21 @@ enum Direction {
     East,
 }
 
+impl Direction {
+    pub fn to_usize(self) -> usize {
+        match self {
+            Direction::North => 0,
+            Direction::West => 1,
+            Direction::South => 2,
+            Direction::East => 3,
+        }
+    }
+}
+
 fn get_energized_tiles(grid: &Vec<Vec<Tile>>, beam: (isize, isize, Direction)) -> u32 {
     let mut energized_grid: Vec<Vec<bool>> = vec![vec![false; grid[0].len()]; grid.len()];
-    let mut visited: HashSet<(isize, isize, Direction)> = HashSet::new();
+    // using a matrix to check visits is waayyyyy faster than using HashSet, as .contains will take more time as the HashSet grows
+    let mut visited: Vec<Vec<[bool; 4]>> = vec![vec![[false; 4]; grid[0].len()]; grid.len()];
     let mut beams: Vec<(isize, isize, Direction)> = vec![beam];
 
     while let Some((x, y, direction)) = beams.pop() {
@@ -37,11 +47,11 @@ fn get_energized_tiles(grid: &Vec<Vec<Tile>>, beam: (isize, isize, Direction)) -
             || grid.len() <= (x as usize)
             || y < 0
             || grid[0].len() <= (y as usize)
-            || visited.contains(&(x, y, direction))
+            || visited[x as usize][y as usize][direction.to_usize()]
         {
             continue;
         }
-        visited.insert((x, y, direction));
+        visited[x as usize][y as usize][direction.to_usize()] = true;
         energized_grid[x as usize][y as usize] = true;
         let tile = grid[x as usize][y as usize];
 
