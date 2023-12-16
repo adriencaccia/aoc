@@ -31,59 +31,51 @@ fn get_energized_tiles(grid: &Vec<Vec<Tile>>, beam: (isize, isize, Direction)) -
     let mut visited: HashSet<(isize, isize, Direction)> = HashSet::new();
     let mut beams: Vec<(isize, isize, Direction)> = vec![beam];
 
-    loop {
-        if beams.is_empty() {
-            return energized_grid
-                .into_iter()
-                .map(|l| l.into_iter().map(|b| if b { 1 } else { 0 }).sum::<u32>())
-                .sum();
+    while let Some((x, y, direction)) = beams.pop() {
+        // skip beam if it has gone outside or is already visited
+        if x < 0
+            || grid.len() <= (x as usize)
+            || y < 0
+            || grid[0].len() <= (y as usize)
+            || visited.contains(&(x, y, direction))
+        {
+            continue;
         }
-        let mut new_beams: Vec<(isize, isize, Direction)> = vec![];
-        beams = beams
-            .into_iter()
-            .filter_map(|beam| {
-                let (x, y, direction) = beam;
-                // skip beams that have gone outside or are already visited
-                if x < 0
-                    || grid.len() <= (x as usize)
-                    || y < 0
-                    || grid[0].len() <= (y as usize)
-                    || visited.contains(&(x, y, direction))
-                {
-                    return None;
-                }
-                visited.insert((x, y, direction));
-                energized_grid[x as usize][y as usize] = true;
-                let tile = grid[x as usize][y as usize];
+        visited.insert((x, y, direction));
+        energized_grid[x as usize][y as usize] = true;
+        let tile = grid[x as usize][y as usize];
 
-                match (tile, direction) {
-                    (Tile::Empty | Tile::SplitH, Direction::East) => Some((x, y + 1, direction)),
-                    (Tile::Empty | Tile::SplitV, Direction::South) => Some((x + 1, y, direction)),
-                    (Tile::Empty | Tile::SplitH, Direction::West) => Some((x, y - 1, direction)),
-                    (Tile::Empty | Tile::SplitV, Direction::North) => Some((x - 1, y, direction)),
-                    //       \
-                    (Tile::MirrorNWSE, Direction::East) => Some((x + 1, y, Direction::South)),
-                    (Tile::MirrorNWSE, Direction::South) => Some((x, y + 1, Direction::East)),
-                    (Tile::MirrorNWSE, Direction::West) => Some((x - 1, y, Direction::North)),
-                    (Tile::MirrorNWSE, Direction::North) => Some((x, y - 1, Direction::West)),
-                    //       /
-                    (Tile::MirrorSWNE, Direction::East) => Some((x - 1, y, Direction::North)),
-                    (Tile::MirrorSWNE, Direction::South) => Some((x, y - 1, Direction::West)),
-                    (Tile::MirrorSWNE, Direction::West) => Some((x + 1, y, Direction::South)),
-                    (Tile::MirrorSWNE, Direction::North) => Some((x, y + 1, Direction::East)),
-                    (Tile::SplitH, _) => {
-                        new_beams.push((x, y + 1, Direction::East));
-                        Some((x, y - 1, Direction::West))
-                    }
-                    (Tile::SplitV, _) => {
-                        new_beams.push((x + 1, y, Direction::South));
-                        Some((x - 1, y, Direction::North))
-                    }
-                }
-            })
-            .collect_vec();
-        beams.extend(new_beams);
+        let new_beam = match (tile, direction) {
+            (Tile::Empty | Tile::SplitH, Direction::East) => (x, y + 1, direction),
+            (Tile::Empty | Tile::SplitV, Direction::South) => (x + 1, y, direction),
+            (Tile::Empty | Tile::SplitH, Direction::West) => (x, y - 1, direction),
+            (Tile::Empty | Tile::SplitV, Direction::North) => (x - 1, y, direction),
+            //       \
+            (Tile::MirrorNWSE, Direction::East) => (x + 1, y, Direction::South),
+            (Tile::MirrorNWSE, Direction::South) => (x, y + 1, Direction::East),
+            (Tile::MirrorNWSE, Direction::West) => (x - 1, y, Direction::North),
+            (Tile::MirrorNWSE, Direction::North) => (x, y - 1, Direction::West),
+            //       /
+            (Tile::MirrorSWNE, Direction::East) => (x - 1, y, Direction::North),
+            (Tile::MirrorSWNE, Direction::South) => (x, y - 1, Direction::West),
+            (Tile::MirrorSWNE, Direction::West) => (x + 1, y, Direction::South),
+            (Tile::MirrorSWNE, Direction::North) => (x, y + 1, Direction::East),
+            (Tile::SplitH, _) => {
+                beams.push((x, y + 1, Direction::East));
+                (x, y - 1, Direction::West)
+            }
+            (Tile::SplitV, _) => {
+                beams.push((x + 1, y, Direction::South));
+                (x - 1, y, Direction::North)
+            }
+        };
+        beams.push(new_beam);
     }
+
+    energized_grid
+        .into_iter()
+        .map(|l| l.into_iter().map(|b| if b { 1 } else { 0 }).sum::<u32>())
+        .sum()
 }
 
 fn parse_input(input: &str) -> (u32, u32) {
