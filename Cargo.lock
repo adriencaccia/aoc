@@ -540,6 +540,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "parse-display",
+ "rayon",
  "regex",
  "strum",
 ]
