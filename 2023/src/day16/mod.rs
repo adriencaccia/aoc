@@ -88,7 +88,7 @@ fn get_energized_tiles(grid: &Vec<Vec<Tile>>, beam: (isize, isize, Direction)) -
         .sum()
 }
 
-fn parse_input(input: &str) -> (u32, u32) {
+pub fn part1(input: &str) -> u32 {
     let grid: Vec<Vec<Tile>> = input
         .trim()
         .lines()
@@ -99,7 +99,19 @@ fn parse_input(input: &str) -> (u32, u32) {
         })
         .collect_vec();
 
-    let part1 = get_energized_tiles(&grid, (0, 0, Direction::East));
+    get_energized_tiles(&grid, (0, 0, Direction::East))
+}
+
+pub fn part2(input: &str) -> u32 {
+    let grid: Vec<Vec<Tile>> = input
+        .trim()
+        .lines()
+        .map(|l| {
+            l.chars()
+                .map(|c| c.to_string().parse().unwrap())
+                .collect_vec()
+        })
+        .collect_vec();
 
     let rows = (0..grid.len())
         .into_par_iter()
@@ -122,9 +134,11 @@ fn parse_input(input: &str) -> (u32, u32) {
         .max()
         .unwrap();
 
-    let part2 = rows.max(columns);
+    rows.max(columns)
+}
 
-    (part1, part2)
+pub fn parse_input(input: &str) -> (u32, u32) {
+    (part1(input), part2(input))
 }
 
 pub fn main() -> (u32, u32) {
