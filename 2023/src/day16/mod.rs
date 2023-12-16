@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use itertools::Itertools;
 use parse_display::{Display, FromStr};
+use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(Display, FromStr, PartialEq, Eq, Hash, Debug, Clone, Copy)]
 enum Tile {
@@ -17,7 +18,7 @@ enum Tile {
     SplitV,
 }
 
-#[derive(Eq, PartialEq, Hash, Debug, Copy, Clone)]
+#[derive(EnumIter, Eq, PartialEq, Hash, Debug, Copy, Clone)]
 enum Direction {
     North,
     West,
@@ -25,19 +26,10 @@ enum Direction {
     East,
 }
 
-fn parse_input(input: &str) -> (u32, u32) {
-    let grid: Vec<Vec<Tile>> = input
-        .trim()
-        .lines()
-        .map(|l| {
-            l.chars()
-                .map(|c| c.to_string().parse().unwrap())
-                .collect_vec()
-        })
-        .collect_vec();
+fn get_energized_tiles(grid: &Vec<Vec<Tile>>, beam: ((isize, isize), Direction)) -> u32 {
     let mut energized_grid: Vec<Vec<bool>> = vec![vec![false; grid[0].len()]; grid.len()];
-    let mut beams: Vec<((isize, isize), Direction)> = vec![((0, 0), Direction::East)];
     let mut visited: HashSet<((isize, isize), Direction)> = HashSet::new();
+    let mut beams: Vec<((isize, isize), Direction)> = vec![beam];
 
     loop {
         if beams.iter().all(|&((x, y), direction)| {
@@ -47,7 +39,10 @@ fn parse_input(input: &str) -> (u32, u32) {
                 || grid[0].len() <= (y as usize)
                 || visited.contains(&((x, y), direction))
         }) {
-            break;
+            return energized_grid
+                .into_iter()
+                .map(|l| l.into_iter().map(|b| if b { 1 } else { 0 }).sum::<u32>())
+                .sum();
         }
         let mut new_beams: Vec<((isize, isize), Direction)> = vec![];
         for beam_idx in 0..beams.len() {
@@ -121,12 +116,53 @@ fn parse_input(input: &str) -> (u32, u32) {
                 .filter(|b| !visited.contains(b)),
         );
     }
+}
 
-    let part1 = energized_grid
-        .into_iter()
-        .map(|l| l.into_iter().map(|b| if b { 1 } else { 0 }).sum::<u32>())
-        .sum();
-    let part2 = 0;
+fn parse_input(input: &str) -> (u32, u32) {
+    let grid: Vec<Vec<Tile>> = input
+        .trim()
+        .lines()
+        .map(|l| {
+            l.chars()
+                .map(|c| c.to_string().parse().unwrap())
+                .collect_vec()
+        })
+        .collect_vec();
+
+    let part1 = get_energized_tiles(&grid, ((0, 0), Direction::East));
+
+    let part2 = Direction::iter()
+        .map(|direction| match direction {
+            Direction::East => (0..grid.len())
+                .map(|x| get_energized_tiles(&grid, ((x as isize, 0), Direction::East)))
+                .max()
+                .unwrap(),
+            Direction::South => (0..grid[0].len())
+                .map(|y| get_energized_tiles(&grid, ((0, y as isize), Direction::South)))
+                .max()
+                .unwrap(),
+            Direction::West => (0..grid.len())
+                .map(|x| {
+                    get_energized_tiles(
+                        &grid,
+                        ((x as isize, grid[0].len() as isize), Direction::West),
+                    )
+                })
+                .max()
+                .unwrap(),
+            Direction::North => (0..grid[0].len())
+                .map(|y| {
+                    get_energized_tiles(
+                        &grid,
+                        ((grid.len() as isize, y as isize), Direction::North),
+                    )
+                })
+                .max()
+                .unwrap(),
+        })
+        .max()
+        .unwrap();
+
     (part1, part2)
 }
 
@@ -162,7 +198,7 @@ mod tests {
         let (part1, part2) = parse_input(EXAMPLE_INPUT);
 
         assert_eq!(part1, 46);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 51);
     }
 
     #[test]
@@ -170,6 +206,6 @@ mod tests {
         let (part1, part2) = main();
 
         assert_eq!(part1, 7939);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 8318);
     }
 }
