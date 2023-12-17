@@ -55,10 +55,14 @@ impl PartialOrd for State {
 ///
 /// Do not use the dist matrix, as the shortest path to the very end is not necessarily including the shortest path to every of its nodes.
 /// Because of the maximum 3 moves in the same direction rule.
-pub fn shortest_path(grid: &Vec<Vec<u32>>) -> u32 {
+pub fn shortest_path(
+    grid: &Vec<Vec<u32>>,
+    min_same_direction: usize,
+    max_same_direction: usize,
+) -> u32 {
     // position, direction, times moved same direction
     let mut visited: Vec<Vec<Vec<bool>>> =
-        vec![vec![vec![false; 4]; 4]; grid.len() * grid[0].len()];
+        vec![vec![vec![false; 11]; 4]; grid.len() * grid[0].len()];
 
     let mut heap = BinaryHeap::new();
 
@@ -84,8 +88,7 @@ pub fn shortest_path(grid: &Vec<Vec<u32>>) -> u32 {
         let x = position / grid.len();
         let y = position % grid.len();
 
-        if position == goal {
-            println!("x {}, y {}, cost {}", x, y, cost);
+        if position == goal && same_direction_moves >= min_same_direction {
             return cost as u32;
         }
 
@@ -131,7 +134,7 @@ pub fn shortest_path(grid: &Vec<Vec<u32>>) -> u32 {
                 _ => y,
             };
 
-            if Some(next_direction) == direction && same_direction_moves < 3 {
+            if Some(next_direction) == direction && same_direction_moves < max_same_direction {
                 let next = State {
                     cost: cost + grid[new_x][new_y] as usize,
                     position: new_x * grid.len() + new_y,
@@ -140,7 +143,9 @@ pub fn shortest_path(grid: &Vec<Vec<u32>>) -> u32 {
                 };
                 heap.push(next);
             }
-
+            if direction.is_some() && same_direction_moves < min_same_direction {
+                continue;
+            }
             match (direction, next_direction) {
                 (Some(Direction::North), Direction::South | Direction::North) => continue,
                 (Some(Direction::East), Direction::West | Direction::East) => continue,
@@ -170,8 +175,8 @@ fn parse_input(input: &str) -> (u32, u32) {
         .map(|l| l.chars().map(|c| c.to_digit(10).unwrap()).collect_vec())
         .collect_vec();
 
-    let part1 = shortest_path(&grid);
-    let part2 = 0;
+    let part1 = shortest_path(&grid, 1, 3);
+    let part2 = shortest_path(&grid, 4, 10);
     (part1, part2)
 }
 
@@ -210,7 +215,7 @@ mod tests {
         let (part1, part2) = parse_input(EXAMPLE_INPUT);
 
         assert_eq!(part1, 102);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 94);
     }
 
     #[test]
@@ -218,6 +223,6 @@ mod tests {
         let (part1, part2) = main();
 
         assert_eq!(part1, 635);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 734);
     }
 }
