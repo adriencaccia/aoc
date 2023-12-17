@@ -34,13 +34,8 @@ struct State {
 // instead of a max-heap.
 impl Ord for State {
     fn cmp(&self, other: &Self) -> Ordering {
-        // Notice that the we flip the ordering on costs.
-        // In case of a tie we compare positions - this step is necessary
-        // to make implementations of `PartialEq` and `Ord` consistent.
-        other
-            .cost
-            .cmp(&self.cost)
-            .then_with(|| self.position.cmp(&other.position))
+        // Notice that the we flip the ordering on costs, making sure that the queue becomes a min-heap
+        other.cost.cmp(&self.cost)
     }
 }
 
@@ -62,7 +57,7 @@ pub fn shortest_path(
 ) -> u32 {
     // position, direction, times moved same direction
     let mut visited: Vec<Vec<Vec<bool>>> =
-        vec![vec![vec![false; 11]; 4]; grid.len() * grid[0].len()];
+        vec![vec![vec![false; max_same_direction + 1]; 4]; grid.len() * grid[0].len()];
 
     let mut heap = BinaryHeap::new();
 
