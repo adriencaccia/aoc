@@ -163,16 +163,26 @@ pub fn shortest_path(
     unreachable!()
 }
 
-fn parse_input(input: &str) -> (u32, u32) {
+pub fn part1(input: &str) -> u32 {
     let grid = input
         .trim()
         .lines()
         .map(|l| l.chars().map(|c| c.to_digit(10).unwrap()).collect_vec())
         .collect_vec();
+    shortest_path(&grid, 1, 3)
+}
 
-    let part1 = shortest_path(&grid, 1, 3);
-    let part2 = shortest_path(&grid, 4, 10);
-    (part1, part2)
+pub fn part2(input: &str) -> u32 {
+    let grid = input
+        .trim()
+        .lines()
+        .map(|l| l.chars().map(|c| c.to_digit(10).unwrap()).collect_vec())
+        .collect_vec();
+    shortest_path(&grid, 4, 10)
+}
+
+pub fn parse_input(input: &str) -> (u32, u32) {
+    (part1(input), part2(input))
 }
 
 pub fn main() -> (u32, u32) {
