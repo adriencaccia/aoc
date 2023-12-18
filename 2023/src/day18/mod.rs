@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use parse_display::{Display, FromStr};
 
 #[derive(Display, FromStr, PartialEq, Eq, Debug)]
@@ -23,27 +22,25 @@ enum Direction {
 
 /// Calculates the inner area of the polygon with the [Shoelace formula](https://en.wikipedia.org/wiki/Shoelace_formula),
 /// then adds the perimeter thanks to [Pick's theorem](https://en.wikipedia.org/wiki/Pick%27s_theorem).
-fn area_from_ins(ins: Vec<Instruction>) -> usize {
+fn area_from_ins<I>(ins: I) -> usize
+where
+    I: IntoIterator<Item = Instruction>,
+{
     let mut point = (0_isize, 0_isize);
-    let inner_area = ins
-        .iter()
-        .fold(0_isize, |acc, ins| {
-            let x1 = point.0;
-            let y1 = point.1;
-            match ins.direction {
-                Direction::Right => point.1 += ins.meters as isize,
-                Direction::Down => point.0 += ins.meters as isize,
-                Direction::Left => point.1 -= ins.meters as isize,
-                Direction::Up => point.0 -= ins.meters as isize,
-            };
+    let (inner_area, perimeter) = ins.into_iter().fold((0_isize, 0), |(acc, perim), ins| {
+        let x1 = point.0;
+        let y1 = point.1;
+        match ins.direction {
+            Direction::Right => point.1 += ins.meters as isize,
+            Direction::Down => point.0 += ins.meters as isize,
+            Direction::Left => point.1 -= ins.meters as isize,
+            Direction::Up => point.0 -= ins.meters as isize,
+        };
 
-            acc + (x1 * point.1 - point.0 * y1)
-        })
-        .unsigned_abs()
-        .div_euclid(2);
-    let perimeter = ins.into_iter().fold(0, |acc, ins| acc + ins.meters);
+        (acc + (x1 * point.1 - point.0 * y1), perim + ins.meters)
+    });
 
-    inner_area + (perimeter / 2) + 1
+    (inner_area.unsigned_abs() / 2) + (perimeter / 2) + 1
 }
 
 fn parse_input(input: &str) -> (usize, usize) {
@@ -70,8 +67,8 @@ fn parse_input(input: &str) -> (usize, usize) {
         }
     });
 
-    let part1 = area_from_ins(ins_p1.collect_vec());
-    let part2 = area_from_ins(ins_p2.collect_vec());
+    let part1 = area_from_ins(ins_p1);
+    let part2 = area_from_ins(ins_p2);
     (part1, part2)
 }
 
