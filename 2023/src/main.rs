@@ -65,7 +65,10 @@ fn run_day(day: u8) {
         15 => day15::main(),
         16 => day16::main(),
         17 => day17::main(),
-        18 => day18::main(),
+        18 => {
+            day18::main();
+            (0, 0)
+        }
         _ => Default::default(),
     };
 }

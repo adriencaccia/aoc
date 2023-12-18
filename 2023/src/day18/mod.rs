@@ -1,6 +1,5 @@
 use itertools::Itertools;
 use parse_display::{Display, FromStr};
-use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(Display, FromStr, PartialEq, Eq, Debug)]
 #[display("{direction} {meters} ({color})")]
@@ -10,7 +9,7 @@ struct Instruction {
     color: String,
 }
 
-#[derive(Display, FromStr, Eq, PartialEq, Debug, EnumIter)]
+#[derive(Display, FromStr, Eq, PartialEq, Debug)]
 enum Direction {
     #[display("U")]
     Up,
@@ -22,70 +21,61 @@ enum Direction {
     Right,
 }
 
-fn print_grid(grid: &[Vec<char>]) {
-    for line in grid {
-        println!("{}", line.iter().join(""));
-    }
+/// Calculates the inner area of the polygon with the [Shoelace formula](https://en.wikipedia.org/wiki/Shoelace_formula),
+/// then adds the perimeter thanks to [Pick's theorem](https://en.wikipedia.org/wiki/Pick%27s_theorem).
+fn area_from_ins(ins: Vec<Instruction>) -> usize {
+    let mut point = (0_isize, 0_isize);
+    let inner_area = ins
+        .iter()
+        .fold(0_isize, |acc, ins| {
+            let x1 = point.0;
+            let y1 = point.1;
+            match ins.direction {
+                Direction::Right => point.1 += ins.meters as isize,
+                Direction::Down => point.0 += ins.meters as isize,
+                Direction::Left => point.1 -= ins.meters as isize,
+                Direction::Up => point.0 -= ins.meters as isize,
+            };
+
+            acc + (x1 * point.1 - point.0 * y1)
+        })
+        .unsigned_abs()
+        .div_euclid(2);
+    let perimeter = ins.into_iter().fold(0, |acc, ins| acc + ins.meters);
+
+    inner_area + (perimeter / 2) + 1
 }
 
-fn fill(grid: &mut Vec<Vec<char>>) {
-    let size = grid.len();
-    let start_inside = (size / 2 + 1, size / 2 + 1);
-    let mut terrains: Vec<(usize, usize)> = vec![start_inside];
-
-    while let Some((x, y)) = terrains.pop() {
-        if grid[x][y] == '#' {
-            continue;
-        }
-        grid[x][y] = '#';
-        Direction::iter().for_each(|d| match d {
-            Direction::Right => terrains.push((x, y + 1)),
-            Direction::Down => terrains.push((x + 1, y)),
-            Direction::Left => terrains.push((x, y - 1)),
-            Direction::Up => terrains.push((x - 1, y)),
-        });
-    }
-}
-
-fn parse_input(input: &str) -> (u32, u32) {
-    let instructions = input
+fn parse_input(input: &str) -> (usize, usize) {
+    let ins_p1 = input
         .trim()
         .lines()
         .map(|l| l.parse::<Instruction>().unwrap());
 
-    let size = 500;
-    let mut grid = vec![vec!['.'; size * 2]; size];
-    let mut cur_x = size / 2;
-    let mut cur_y = size / 2;
-    // let mut min_x = usize::MAX;
-    // let mut first_inside = (usize::MAX, usize::MAX);
-    grid[cur_x][cur_y] = '#';
-    for ins in instructions {
-        for _ in 0..ins.meters {
-            match ins.direction {
-                Direction::Right => cur_y += 1,
-                Direction::Down => cur_x += 1,
-                Direction::Left => cur_y -= 1,
-                Direction::Up => cur_x -= 1,
-            }
+    let ins_p2 = ins_p1.clone().map(|ins| {
+        let direction = match ins.color.chars().last() {
+            Some('0') => Direction::Right,
+            Some('1') => Direction::Down,
+            Some('2') => Direction::Left,
+            Some('3') => Direction::Up,
+            _ => unreachable!(),
+        };
+        let meters =
+            usize::from_str_radix(&ins.color.as_str()[1..ins.color.len() - 1], 16).unwrap();
 
-            grid[cur_x][cur_y] = '#';
-            // if cur_x <= first_inside.0 && cur_y <= first_inside.1 {
-            //     first_inside = (cur_x + 1, cur_y + 1)
-            // }
+        Instruction {
+            color: ins.color,
+            direction,
+            meters,
         }
-    }
-    // print_grid(&grid);
-    fill(&mut grid);
+    });
 
-    let part1 = grid
-        .iter()
-        .fold(0, |acc, l| acc + l.iter().filter(|&c| *c == '#').count()) as u32;
-    let part2 = 0;
+    let part1 = area_from_ins(ins_p1.collect_vec());
+    let part2 = area_from_ins(ins_p2.collect_vec());
     (part1, part2)
 }
 
-pub fn main() -> (u32, u32) {
+pub fn main() -> (usize, usize) {
     let (part1, part2) = parse_input(include_str!("input.txt"));
     println!("part1 {}", part1);
     println!("part2 {}", part2);
@@ -121,7 +111,7 @@ mod tests {
         let (part1, part2) = parse_input(EXAMPLE_INPUT);
 
         assert_eq!(part1, 62);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 952408144115);
     }
 
     #[test]
@@ -129,6 +119,6 @@ mod tests {
         let (part1, part2) = main();
 
         assert_eq!(part1, 106459);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 63806916814808);
     }
 }
