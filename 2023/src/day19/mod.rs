@@ -66,7 +66,7 @@ impl Part {
 
 // find all paths between 'in' and 'A', recording the rule index for each step
 // TODO: change to a recursive function that starts with the whole range and split it for every possibility, return sum the combinaisons of the if reaching the 'A' workflow, otherwise return 0
-fn find_all_paths(workflows: &HashMap<String, &ParsedWorkflow>) -> Vec<Vec<(String, usize)>> {
+fn find_all_paths(workflows: &HashMap<String, ParsedWorkflow>) -> Vec<Vec<(String, usize)>> {
     let mut paths = vec![];
     let mut queue = vec![vec![("in".to_string(), 0)]];
 
@@ -76,25 +76,9 @@ fn find_all_paths(workflows: &HashMap<String, &ParsedWorkflow>) -> Vec<Vec<(Stri
 
         for (idx, rule) in last_workflow_rules.iter().enumerate() {
             match rule {
-                Rule::LessThan {
-                    part_to_cmp: _,
-                    target: _,
-                    destination,
-                } => {
-                    let mut new_path = path.clone();
-                    new_path.push((destination.clone(), idx));
-                    queue.push(new_path);
-                }
-                Rule::GreaterThan {
-                    part_to_cmp: _,
-                    target: _,
-                    destination,
-                } => {
-                    let mut new_path = path.clone();
-                    new_path.push((destination.clone(), idx));
-                    queue.push(new_path);
-                }
-                Rule::GoTo { destination } => {
+                Rule::LessThan { destination, .. }
+                | Rule::GreaterThan { destination, .. }
+                | Rule::GoTo { destination } => {
                     let mut new_path = path.clone();
                     new_path.push((destination.clone(), idx));
                     queue.push(new_path);
@@ -111,7 +95,7 @@ fn find_all_paths(workflows: &HashMap<String, &ParsedWorkflow>) -> Vec<Vec<(Stri
 }
 
 fn get_accepted_part_ranges(
-    workflows: &HashMap<String, &ParsedWorkflow>,
+    workflows: &HashMap<String, ParsedWorkflow>,
     path: Vec<(String, usize)>,
 ) -> (
     RangeInclusive<usize>,
@@ -183,101 +167,97 @@ fn get_accepted_part_ranges(
     (x_range, m_range, a_range, s_range)
 }
 
+fn is_part_accepted(
+    workflow: &ParsedWorkflow,
+    part: &Part,
+    workflows_map: &HashMap<String, ParsedWorkflow>,
+) -> bool {
+    if workflow.name == 'A'.to_string() {
+        return true;
+    }
+    if workflow.name == 'R'.to_string() {
+        return false;
+    }
+
+    for rule in workflow.rules.iter() {
+        match rule {
+            Rule::LessThan {
+                part_to_cmp,
+                target,
+                destination,
+            } => {
+                let is_part_valid = match part_to_cmp.as_str() {
+                    "x" => part.x < *target,
+                    "m" => part.m < *target,
+                    "a" => part.a < *target,
+                    "s" => part.s < *target,
+                    _ => unreachable!(),
+                };
+                if is_part_valid {
+                    let next_workflow = workflows_map.get(destination).unwrap();
+                    return is_part_accepted(next_workflow, part, workflows_map);
+                }
+            }
+            Rule::GreaterThan {
+                part_to_cmp,
+                target,
+                destination,
+            } => {
+                let is_part_valid = match part_to_cmp.as_str() {
+                    "x" => part.x > *target,
+                    "m" => part.m > *target,
+                    "a" => part.a > *target,
+                    "s" => part.s > *target,
+                    _ => unreachable!(),
+                };
+                if is_part_valid {
+                    let next_workflow = workflows_map.get(destination).unwrap();
+                    return is_part_accepted(next_workflow, part, workflows_map);
+                }
+            }
+            Rule::GoTo { destination } => {
+                let next_workflow = workflows_map.get(destination).unwrap();
+                return is_part_accepted(next_workflow, part, workflows_map);
+            }
+        }
+    }
+
+    false
+}
+
 fn parse_input(input: &str) -> (usize, usize) {
     let (workflows_str, parts_str) = input.split("\n\n").collect_tuple().unwrap();
 
-    let workflows: Vec<ParsedWorkflow> = workflows_str
+    let mut workflows_map: HashMap<String, ParsedWorkflow> = workflows_str
         .lines()
         .map(|line| line.parse::<Workflow>().unwrap().into())
+        .map(|workflow: ParsedWorkflow| (workflow.name.clone(), workflow))
         .collect();
-    let mut workflows_map: HashMap<String, &ParsedWorkflow> = workflows
-        .iter()
-        .map(|workflow| (workflow.name.clone(), workflow))
-        .collect();
-    let accepted_workflow = ParsedWorkflow {
-        name: "A".to_string(),
-        rules: vec![],
-    };
-    workflows_map.insert("A".to_string(), &accepted_workflow);
-    let rejected_workflow = ParsedWorkflow {
-        name: "R".to_string(),
-        rules: vec![],
-    };
-    workflows_map.insert("R".to_string(), &rejected_workflow);
-    let parts: Vec<Part> = parts_str
+    workflows_map.insert(
+        "A".to_string(),
+        ParsedWorkflow {
+            name: "A".to_string(),
+            rules: vec![],
+        },
+    );
+    workflows_map.insert(
+        "R".to_string(),
+        ParsedWorkflow {
+            name: "R".to_string(),
+            rules: vec![],
+        },
+    );
+
+    let part1 = parts_str
         .lines()
-        .map(|line| line.parse().unwrap())
-        .collect();
+        .map(|line| line.parse::<Part>().unwrap())
+        .filter(|part| is_part_accepted(workflows_map.get("in").unwrap(), part, &workflows_map))
+        .map(|part| part.sum())
+        .sum();
 
-    let accepted_parts = parts.iter().filter(|part| {
-        let mut queue = vec![*workflows_map.get("in").unwrap()];
-
-        while let Some(workflow) = queue.pop() {
-            if workflow.name == 'A'.to_string() {
-                return true;
-            }
-            if workflow.name == 'R'.to_string() {
-                return false;
-            }
-
-            for rule in workflow.rules.iter() {
-                match rule {
-                    Rule::LessThan {
-                        part_to_cmp,
-                        target,
-                        destination,
-                    } => {
-                        let is_part_valid = match part_to_cmp.as_str() {
-                            "x" => part.x < *target,
-                            "m" => part.m < *target,
-                            "a" => part.a < *target,
-                            "s" => part.s < *target,
-                            _ => unreachable!(),
-                        };
-                        if is_part_valid {
-                            queue.push(*workflows_map.get(destination).unwrap());
-                            break;
-                        }
-                    }
-                    Rule::GreaterThan {
-                        part_to_cmp,
-                        target,
-                        destination,
-                    } => {
-                        let is_part_valid = match part_to_cmp.as_str() {
-                            "x" => part.x > *target,
-                            "m" => part.m > *target,
-                            "a" => part.a > *target,
-                            "s" => part.s > *target,
-                            _ => unreachable!(),
-                        };
-                        if is_part_valid {
-                            queue.push(*workflows_map.get(destination).unwrap());
-                            break;
-                        }
-                    }
-                    Rule::GoTo { destination } => {
-                        queue.push(*workflows_map.get(destination).unwrap());
-                        break;
-                    }
-                }
-            }
-        }
-
-        unreachable!();
-    });
-
-    let part1 = accepted_parts.into_iter().map(|part| part.sum()).sum();
-
-    let accepted_paths = find_all_paths(&workflows_map);
-
-    let ranges = accepted_paths
-        .iter()
+    let part2 = find_all_paths(&workflows_map)
+        .into_iter()
         .map(|path| get_accepted_part_ranges(&workflows_map, path.clone()))
-        .collect_vec();
-
-    let part2 = ranges
-        .iter()
         .fold(0, |acc, (x_range, m_range, a_range, s_range)| {
             acc + (x_range.end() - x_range.start() + 1)
                 * (m_range.end() - m_range.start() + 1)
