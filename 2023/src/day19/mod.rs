@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 use itertools::Itertools;
 use parse_display::{Display, FromStr};
@@ -8,13 +8,13 @@ enum Rule {
     #[display("{part_to_cmp}<{target}:{destination}")]
     LessThan {
         part_to_cmp: String,
-        target: u32,
+        target: usize,
         destination: String,
     },
     #[display("{part_to_cmp}>{target}:{destination}")]
     GreaterThan {
         part_to_cmp: String,
-        target: u32,
+        target: usize,
         destination: String,
     },
     #[display("{destination}")]
@@ -52,19 +52,138 @@ impl From<Workflow> for ParsedWorkflow {
 #[derive(Display, FromStr, Eq, PartialEq, Debug)]
 #[display("{{x={x},m={m},a={a},s={s}}}")]
 struct Part {
-    x: u32,
-    m: u32,
-    a: u32,
-    s: u32,
+    x: usize,
+    m: usize,
+    a: usize,
+    s: usize,
 }
 
 impl Part {
-    fn sum(&self) -> u32 {
+    fn sum(&self) -> usize {
         self.x + self.m + self.a + self.s
     }
 }
 
-fn parse_input(input: &str) -> (u32, u32) {
+// find all paths between 'in' and 'A', recording the rule index for each step
+// TODO: change to a recursive function that starts with the whole range and split it for every possibility, return sum the combinaisons of the if reaching the 'A' workflow, otherwise return 0
+fn find_all_paths(workflows: &HashMap<String, &ParsedWorkflow>) -> Vec<Vec<(String, usize)>> {
+    let mut paths = vec![];
+    let mut queue = vec![vec![("in".to_string(), 0)]];
+
+    while let Some(path) = queue.pop() {
+        let (last_workflow, _) = path.last().unwrap();
+        let last_workflow_rules = &workflows.get(last_workflow).unwrap().rules;
+
+        for (idx, rule) in last_workflow_rules.iter().enumerate() {
+            match rule {
+                Rule::LessThan {
+                    part_to_cmp: _,
+                    target: _,
+                    destination,
+                } => {
+                    let mut new_path = path.clone();
+                    new_path.push((destination.clone(), idx));
+                    queue.push(new_path);
+                }
+                Rule::GreaterThan {
+                    part_to_cmp: _,
+                    target: _,
+                    destination,
+                } => {
+                    let mut new_path = path.clone();
+                    new_path.push((destination.clone(), idx));
+                    queue.push(new_path);
+                }
+                Rule::GoTo { destination } => {
+                    let mut new_path = path.clone();
+                    new_path.push((destination.clone(), idx));
+                    queue.push(new_path);
+                }
+            }
+        }
+
+        if last_workflow == "A" {
+            paths.push(path);
+        }
+    }
+
+    paths
+}
+
+fn get_accepted_part_ranges(
+    workflows: &HashMap<String, &ParsedWorkflow>,
+    path: Vec<(String, usize)>,
+) -> (
+    RangeInclusive<usize>,
+    RangeInclusive<usize>,
+    RangeInclusive<usize>,
+    RangeInclusive<usize>,
+) {
+    let mut x_range = 1..=4000;
+    let mut m_range = 1..=4000;
+    let mut a_range = 1..=4000;
+    let mut s_range = 1..=4000;
+
+    for ((current, _), (next, next_idx)) in path.iter().tuple_windows() {
+        let workflow = workflows.get(current).unwrap();
+
+        for (idx, rule) in workflow.rules.iter().enumerate() {
+            match rule {
+                Rule::LessThan {
+                    part_to_cmp,
+                    target,
+                    destination,
+                } => {
+                    if destination == next && idx == *next_idx {
+                        match part_to_cmp.as_str() {
+                            "x" => x_range = *x_range.start()..=(target - 1).min(*x_range.end()),
+                            "m" => m_range = *m_range.start()..=(target - 1).min(*m_range.end()),
+                            "a" => a_range = *a_range.start()..=(target - 1).min(*a_range.end()),
+                            "s" => s_range = *s_range.start()..=(target - 1).min(*s_range.end()),
+                            _ => unreachable!(),
+                        };
+                        break;
+                    }
+                    match part_to_cmp.as_str() {
+                        "x" => x_range = *target.max(x_range.start())..=*x_range.end(),
+                        "m" => m_range = *target.max(m_range.start())..=*m_range.end(),
+                        "a" => a_range = *target.max(a_range.start())..=*a_range.end(),
+                        "s" => s_range = *target.max(s_range.start())..=*s_range.end(),
+                        _ => unreachable!(),
+                    };
+                }
+                Rule::GreaterThan {
+                    part_to_cmp,
+                    target,
+                    destination,
+                } => {
+                    if destination == next && idx == *next_idx {
+                        match part_to_cmp.as_str() {
+                            "x" => x_range = *target.max(x_range.start()) + 1..=*x_range.end(),
+                            "m" => m_range = *target.max(m_range.start()) + 1..=*m_range.end(),
+                            "a" => a_range = *target.max(a_range.start()) + 1..=*a_range.end(),
+                            "s" => s_range = *target.max(s_range.start()) + 1..=*s_range.end(),
+                            _ => unreachable!(),
+                        };
+                        break;
+                    }
+                    match part_to_cmp.as_str() {
+                        "x" => x_range = *x_range.start()..=*target.min(x_range.end()),
+                        "m" => m_range = *m_range.start()..=*target.min(m_range.end()),
+                        "a" => a_range = *a_range.start()..=*target.min(a_range.end()),
+                        "s" => s_range = *s_range.start()..=*target.min(s_range.end()),
+                        _ => unreachable!(),
+                    };
+                }
+                _ => {}
+            };
+        }
+    }
+
+    (x_range, m_range, a_range, s_range)
+}
+
+fn parse_input(input: &str) -> (usize, usize) {
     let (workflows_str, parts_str) = input.split("\n\n").collect_tuple().unwrap();
 
     let workflows: Vec<ParsedWorkflow> = workflows_str
@@ -108,19 +227,14 @@ fn parse_input(input: &str) -> (u32, u32) {
                         target,
                         destination,
                     } => {
-                        if *part_to_cmp == 'x'.to_string() && part.x < *target {
-                            queue.push(*workflows_map.get(destination).unwrap());
-                            break;
-                        }
-                        if *part_to_cmp == 'm'.to_string() && part.m < *target {
-                            queue.push(*workflows_map.get(destination).unwrap());
-                            break;
-                        }
-                        if *part_to_cmp == 'a'.to_string() && part.a < *target {
-                            queue.push(*workflows_map.get(destination).unwrap());
-                            break;
-                        }
-                        if *part_to_cmp == 's'.to_string() && part.s < *target {
+                        let is_part_valid = match part_to_cmp.as_str() {
+                            "x" => part.x < *target,
+                            "m" => part.m < *target,
+                            "a" => part.a < *target,
+                            "s" => part.s < *target,
+                            _ => unreachable!(),
+                        };
+                        if is_part_valid {
                             queue.push(*workflows_map.get(destination).unwrap());
                             break;
                         }
@@ -130,19 +244,14 @@ fn parse_input(input: &str) -> (u32, u32) {
                         target,
                         destination,
                     } => {
-                        if *part_to_cmp == 'x'.to_string() && part.x > *target {
-                            queue.push(*workflows_map.get(destination).unwrap());
-                            break;
-                        }
-                        if *part_to_cmp == 'm'.to_string() && part.m > *target {
-                            queue.push(*workflows_map.get(destination).unwrap());
-                            break;
-                        }
-                        if *part_to_cmp == 'a'.to_string() && part.a > *target {
-                            queue.push(*workflows_map.get(destination).unwrap());
-                            break;
-                        }
-                        if *part_to_cmp == 's'.to_string() && part.s > *target {
+                        let is_part_valid = match part_to_cmp.as_str() {
+                            "x" => part.x > *target,
+                            "m" => part.m > *target,
+                            "a" => part.a > *target,
+                            "s" => part.s > *target,
+                            _ => unreachable!(),
+                        };
+                        if is_part_valid {
                             queue.push(*workflows_map.get(destination).unwrap());
                             break;
                         }
@@ -158,15 +267,28 @@ fn parse_input(input: &str) -> (u32, u32) {
         unreachable!();
     });
 
-    let part1 = accepted_parts
-        .into_iter()
-        .map(|part| part.sum())
-        .sum::<u32>();
-    let part2 = 0;
+    let part1 = accepted_parts.into_iter().map(|part| part.sum()).sum();
+
+    let accepted_paths = find_all_paths(&workflows_map);
+
+    let ranges = accepted_paths
+        .iter()
+        .map(|path| get_accepted_part_ranges(&workflows_map, path.clone()))
+        .collect_vec();
+
+    let part2 = ranges
+        .iter()
+        .fold(0, |acc, (x_range, m_range, a_range, s_range)| {
+            acc + (x_range.end() - x_range.start() + 1)
+                * (m_range.end() - m_range.start() + 1)
+                * (a_range.end() - a_range.start() + 1)
+                * (s_range.end() - s_range.start() + 1)
+        });
+
     (part1, part2)
 }
 
-pub fn main() -> (u32, u32) {
+pub fn main() -> (usize, usize) {
     let (part1, part2) = parse_input(include_str!("input.txt"));
     println!("part1 {}", part1);
     println!("part2 {}", part2);
@@ -205,7 +327,7 @@ mod tests {
         let (part1, part2) = parse_input(EXAMPLE_INPUT);
 
         assert_eq!(part1, 19114);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 167409079868000);
     }
 
     #[test]
@@ -213,6 +335,6 @@ mod tests {
         let (part1, part2) = main();
 
         assert_eq!(part1, 319062);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 118638369682135);
     }
 }
