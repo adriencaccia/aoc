@@ -1,21 +1,9 @@
-use parse_display::{Display, FromStr};
-
-#[derive(Display, FromStr, PartialEq, Debug, Clone, Copy)]
-enum Tile {
-    #[display(".")]
-    Garden,
-    #[display("#")]
-    Rock,
-    #[display("S")]
-    Start,
-    Possible,
-}
-
 #[derive(PartialEq, Debug, Clone, Copy)]
 enum Parity {
     Even,
     Odd,
     Empty,
+    Rock,
 }
 
 impl Parity {
@@ -23,7 +11,7 @@ impl Parity {
         match self {
             Parity::Even => Parity::Odd,
             Parity::Odd => Parity::Even,
-            Parity::Empty => Parity::Empty,
+            _ => *self,
         }
     }
 
@@ -35,53 +23,39 @@ impl Parity {
             Parity::Odd
         };
         match (&self, step_parity) {
-            (Parity::Even, Parity::Even) => "O",
-            (Parity::Odd, Parity::Odd) => "O",
-            _ => ".",
+            (Parity::Even, Parity::Even) => "🟪",
+            (Parity::Odd, Parity::Odd) => "🟪",
+            (Parity::Rock, _) => "⬜",
+            _ => "⬛",
         }
     }
 }
 
 #[cfg(debug_assertions)]
 fn print_visited_step(visited: &Vec<Vec<Parity>>, step: usize) {
+    use itertools::Itertools;
+
     println!("Step {}", step);
     for row in visited {
-        for parity in row {
-            print!("{}", parity.to_symbol(step));
-        }
-        println!();
+        println!("{}", row.iter().map(|r| r.to_symbol(step)).join(""));
     }
-    println!();
 }
 
 fn part1(input: &str, steps: usize) -> u32 {
-    let grid: Vec<Vec<Tile>> = input
+    let mut visited_gardens: Vec<Vec<Parity>> = input
         .trim()
         .lines()
         .map(|line| {
             line.trim()
                 .chars()
-                .map(|c| c.to_string().parse().unwrap())
+                .map(|c| match c {
+                    'S' => Parity::Even,
+                    '#' => Parity::Rock,
+                    _ => Parity::Empty,
+                })
                 .collect()
         })
         .collect();
-
-    let starting_position = grid
-        .iter()
-        .enumerate()
-        .find_map(|(y, row)| {
-            row.iter().enumerate().find_map(|(x, tile)| {
-                if *tile == Tile::Start {
-                    Some((x, y))
-                } else {
-                    None
-                }
-            })
-        })
-        .unwrap();
-    let mut visited_gardens: Vec<Vec<Parity>> =
-        vec![vec![Parity::Empty; grid[0].len()]; grid.len()];
-    visited_gardens[starting_position.1][starting_position.0] = Parity::Even;
 
     for step in 1..=steps {
         let step_parity = if step % 2 == 0 {
@@ -90,42 +64,33 @@ fn part1(input: &str, steps: usize) -> u32 {
             Parity::Odd
         };
 
-        for x in 0..grid.len() {
-            for y in 0..grid[0].len() {
-                match visited_gardens[x][y] {
-                    Parity::Even | Parity::Odd if step_parity == visited_gardens[x][y].flip() => {
-                        if x > 0
-                            && grid[x - 1][y] == Tile::Garden
-                            && visited_gardens[x - 1][y] == Parity::Empty
-                        {
-                            visited_gardens[x - 1][y] = step_parity;
-                        }
-                        if x < grid.len() - 1
-                            && grid[x + 1][y] == Tile::Garden
-                            && visited_gardens[x + 1][y] == Parity::Empty
-                        {
-                            visited_gardens[x + 1][y] = step_parity;
-                        }
-                        if y > 0
-                            && grid[x][y - 1] == Tile::Garden
-                            && visited_gardens[x][y - 1] == Parity::Empty
-                        {
-                            visited_gardens[x][y - 1] = step_parity;
-                        }
-                        if y < grid[0].len() - 1
-                            && grid[x][y + 1] == Tile::Garden
-                            && visited_gardens[x][y + 1] == Parity::Empty
-                        {
-                            visited_gardens[x][y + 1] = step_parity;
-                        }
+        for x in 0..visited_gardens.len() {
+            for y in 0..visited_gardens[0].len() {
+                let current_parity = visited_gardens[x][y];
+                if (current_parity == Parity::Even || current_parity == Parity::Odd)
+                    && step_parity == current_parity.flip()
+                {
+                    if x > 0 && visited_gardens[x - 1][y] == Parity::Empty {
+                        visited_gardens[x - 1][y] = step_parity;
                     }
-                    _ => continue,
+                    if x < visited_gardens.len() - 1 && visited_gardens[x + 1][y] == Parity::Empty {
+                        visited_gardens[x + 1][y] = step_parity;
+                    }
+                    if y > 0 && visited_gardens[x][y - 1] == Parity::Empty {
+                        visited_gardens[x][y - 1] = step_parity;
+                    }
+                    if y < visited_gardens[0].len() - 1
+                        && visited_gardens[x][y + 1] == Parity::Empty
+                    {
+                        visited_gardens[x][y + 1] = step_parity;
+                    }
                 }
             }
         }
-        #[cfg(debug_assertions)]
-        print_visited_step(&visited_gardens, step);
     }
+
+    #[cfg(debug_assertions)]
+    print_visited_step(&visited_gardens, 64);
 
     visited_gardens
         .into_iter()
