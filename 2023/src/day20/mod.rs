@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Not};
+use std::{cell::RefCell, collections::HashMap, ops::Not, rc::Rc};
 
 use parse_display::{Display, FromStr};
 
@@ -62,7 +62,12 @@ impl From<Module> for ParsedModule {
     }
 }
 
-fn press_broadcast(modules_map: &mut HashMap<String, ParsedModule>) -> (u32, u32) {
+fn press_broadcast(
+    modules_map: &mut HashMap<String, ParsedModule>,
+    idx: usize,
+    mut origins: Option<&mut HashMap<String, Option<usize>>>,
+    rx_origin: Option<&str>,
+) -> (usize, usize) {
     let mut low_pulses = 0;
     let mut high_pulses = 0;
 
@@ -79,6 +84,17 @@ fn press_broadcast(modules_map: &mut HashMap<String, ParsedModule>) -> (u32, u32
         }
 
         while let Some((origin, pulse_type, destination)) = pulses.pop() {
+            if let Some(rx_origin) = rx_origin {
+                if pulse_type == PulseType::High && destination == rx_origin {
+                    origins
+                        .as_mut()
+                        .unwrap()
+                        .entry(origin.clone())
+                        .and_modify(|v| *v = Some(idx))
+                        .or_insert(Some(idx));
+                }
+            }
+
             match pulse_type {
                 PulseType::Low => low_pulses += 1,
                 PulseType::High => high_pulses += 1,
@@ -171,7 +187,7 @@ fn initialize_conjunctions_pulses_received(modules_map: &mut HashMap<String, Par
     }
 }
 
-fn parse_input(input: &str) -> (u32, u32) {
+fn parse_input(input: &str) -> HashMap<String, ParsedModule> {
     let mut modules_map: HashMap<String, ParsedModule> = input
         .trim()
         .lines()
@@ -187,19 +203,82 @@ fn parse_input(input: &str) -> (u32, u32) {
         .collect();
 
     initialize_conjunctions_pulses_received(&mut modules_map);
+    modules_map
+}
 
-    let (low_pulses, high_pulses) = (0..1000).fold((0, 0), |acc, _| {
-        let (low_pulses, high_pulses) = press_broadcast(&mut modules_map);
+fn part1(input: &str) -> usize {
+    let mut modules_map = parse_input(input);
+
+    let (low_pulses, high_pulses) = (1..=1000).fold((0, 0), |acc, idx| {
+        let (low_pulses, high_pulses) = press_broadcast(&mut modules_map, idx, None, None);
         (acc.0 + low_pulses, acc.1 + high_pulses)
     });
 
-    let part1 = low_pulses * high_pulses;
-    let part2 = 0;
-    (part1, part2)
+    low_pulses * high_pulses
 }
 
-pub fn main() -> (u32, u32) {
-    let (part1, part2) = parse_input(include_str!("input.txt"));
+fn part2(input: &str) -> usize {
+    let mut modules_map = parse_input(input);
+
+    let rx_origin = modules_map
+        .values()
+        .find_map(|module| match module {
+            // module before rx is always going to be a Conjunction
+            ParsedModule::Conjunction {
+                name, destinations, ..
+            } => {
+                if destinations.contains(&"rx".to_string()) {
+                    return Some(name.clone());
+                }
+                None
+            }
+            _ => None,
+        })
+        .unwrap();
+
+    let origins: HashMap<String, Option<usize>> = modules_map
+        .values()
+        .filter_map(|module| match module {
+            ParsedModule::Conjunction {
+                name, destinations, ..
+            }
+            | ParsedModule::FlipFlop {
+                name, destinations, ..
+            } => {
+                if destinations.contains(&rx_origin) {
+                    return Some((name.clone(), None));
+                }
+                None
+            }
+            _ => None,
+        })
+        .collect();
+
+    let mut idx = 0;
+    let origins = Rc::new(RefCell::new(origins));
+
+    loop {
+        idx += 1;
+        let origins_clone = Rc::clone(&origins);
+        press_broadcast(
+            &mut modules_map,
+            idx,
+            Some(&mut origins_clone.borrow_mut()),
+            Some(&rx_origin),
+        );
+
+        if origins.borrow().values().all(|v| v.is_some()) {
+            break;
+        }
+    }
+
+    let value = origins.borrow().values().map(|v| v.unwrap()).product();
+    value
+}
+
+pub fn main() -> (usize, usize) {
+    let input = include_str!("input.txt");
+    let (part1, part2) = (part1(input), part2(input));
     println!("part1 {}", part1);
     println!("part2 {}", part2);
 
@@ -229,18 +308,16 @@ mod tests {
 
     #[test]
     fn test_example_simple() {
-        let (part1, part2) = parse_input(EXAMPLE_INPUT_SIMPLE);
+        let part1 = part1(EXAMPLE_INPUT_SIMPLE);
 
         assert_eq!(part1, 32000000);
-        assert_eq!(part2, 0);
     }
 
     #[test]
     fn test_example() {
-        let (part1, part2) = parse_input(EXAMPLE_INPUT);
+        let part1 = part1(EXAMPLE_INPUT);
 
         assert_eq!(part1, 11687500);
-        assert_eq!(part2, 0);
     }
 
     #[test]
@@ -248,6 +325,6 @@ mod tests {
         let (part1, part2) = main();
 
         assert_eq!(part1, 834323022);
-        assert_eq!(part2, 0);
+        assert_eq!(part2, 225386464601017);
     }
 }
