@@ -15,7 +15,7 @@ fn run_day(day: u8) {
 
     // Use a match statement to call the corresponding day module
     match day {
-        1 => day01::main(),
+        1 => day1::main(),
         _ => Default::default(),
     };
 }
