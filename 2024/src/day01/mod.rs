@@ -66,7 +66,7 @@ pub fn part2(input: &str) -> u32 {
 }
 
 pub fn main() -> (u32, u32) {
-    let (part1, part2) = parse_input(include_str!("input.txt"));
+    let (part1, part2) = parse_input("foo");
     println!("part1 {}", part1);
     println!("part2 {}", part2);
 
