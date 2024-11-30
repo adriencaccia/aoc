@@ -41,3 +41,4 @@ target
 
 # ignore the input files
 2023/**/*.txt
+2024/**/*.txt

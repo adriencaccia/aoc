@@ -743,6 +743,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-2024"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "criterion",
+ "gcd",
+ "image",
+ "indoc",
+ "itertools 0.12.0",
+ "lazy_static",
+ "parse-display",
+ "rayon",
+ "regex",
+ "strum",
+]
+
+[[package]]
 name = "rustix"
 version = "0.38.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
