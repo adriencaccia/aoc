@@ -15,7 +15,11 @@ fn run_day(day: u8) {
 
     // Use a match statement to call the corresponding day module
     match day {
-        1 => day1::main(),
+        1 => {
+            let input = include_str!("day1/input.txt");
+            println!("part1: {}", day1::part1(input));
+            println!("part2: {}", day1::part2(input));
+        }
         _ => Default::default(),
     };
 }

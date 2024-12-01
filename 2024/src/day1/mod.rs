@@ -1,118 +1,93 @@
-fn parse_input(input: &str) -> (u32, u32) {
-    let (part1, part2): (Vec<u32>, Vec<u32>) = input
+use itertools::Itertools;
+use std::{collections::HashMap, iter::zip};
+
+pub fn part1(input: &str) -> u32 {
+    let (mut left, mut right): (Vec<_>, Vec<_>) = input
+        .trim()
         .lines()
-        .map(|line| {
-            let mut digits = line.chars().filter_map(|char| char.to_digit(10));
-            let first = digits.next().unwrap();
-
-            let part1 = match digits.last() {
-                Some(last) => first * 10 + last,
-                None => first * 10 + first,
-            };
-
-            let numbers: Vec<String> = vec![
-                "one".into(),
-                "two".into(),
-                "three".into(),
-                "four".into(),
-                "five".into(),
-                "six".into(),
-                "seven".into(),
-                "eight".into(),
-                "nine".into(),
-            ];
-            let first = find_in_string(line, &numbers);
-
-            let reversed_line = line.chars().rev().collect::<String>();
-            let reversed_numbers: Vec<String> = numbers
-                .into_iter()
-                .map(|number| number.chars().rev().collect::<String>())
-                .collect();
-            let last = find_in_string(&reversed_line, &reversed_numbers);
-
-            let part2 = first * 10 + last;
-
-            (part1, part2)
+        .map(|l| {
+            let (a, b): (u32, u32) = l
+                .split_whitespace()
+                .map(|i| i.parse().unwrap())
+                .collect_tuple()
+                .unwrap();
+            (a, b)
         })
         .unzip();
 
-    (part1.iter().sum(), part2.iter().sum())
+    left.sort();
+    right.sort();
+
+    zip(left, right).fold(0, |acc, (a, b)| acc + a.abs_diff(b))
 }
 
-fn find_in_string(line: &str, numbers: &[String]) -> u32 {
-    for (idx, char) in line.chars().enumerate() {
-        if let Some(digit) = char.to_digit(10) {
-            return digit;
-        }
-
-        for (value, number) in numbers.iter().enumerate() {
-            if line.get(0..idx + 1).unwrap().contains(number) {
-                return value as u32 + 1;
-            }
-        }
-    }
-
-    panic!("No digit or number found in {}", line)
-}
-
-pub fn part1(input: &str) -> u32 {
-    let (part1, _part2) = parse_input(input);
-    part1
+struct Occurrence {
+    left: u32,
+    right: u32,
 }
 
 pub fn part2(input: &str) -> u32 {
-    let (_part1, part2) = parse_input(input);
-    part2
+    let mut hash: HashMap<u32, Occurrence> = HashMap::new();
+
+    input.trim().lines().for_each(|l| {
+        let (a, b): (u32, u32) = l
+            .split_whitespace()
+            .map(|i| i.parse().unwrap())
+            .collect_tuple()
+            .unwrap();
+
+        hash.entry(a)
+            .and_modify(|Occurrence { left, right: _ }| *left += 1)
+            .or_insert(Occurrence { left: 1, right: 0 });
+        hash.entry(b)
+            .and_modify(|Occurrence { left: _, right }| *right += 1)
+            .or_insert(Occurrence { left: 0, right: 1 });
+    });
+
+    hash.iter()
+        .fold(0, |acc, (value, occ)| acc + value * occ.left * occ.right)
 }
 
-pub fn main() -> (u32, u32) {
-    let (part1, part2) = parse_input("foo");
-    println!("part1 {}", part1);
-    println!("part2 {}", part2);
-
-    (part1, part2)
-}
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
 
     use super::*;
 
+    const EXAMPLE_INPUT: &str = indoc! {"
+    3   4
+    4   3
+    2   5
+    1   3
+    3   9
+    3   3
+"};
+
     #[test]
     fn test_example_part1() {
-        let (part1, _part2) = parse_input(indoc! {"
-            1abc2
-            pqr3stu8vwx
-            a1b2c3d4e5f
-            treb7uchet
-        "});
+        let part1 = part1(EXAMPLE_INPUT);
 
-        assert_eq!(part1, 142);
+        assert_eq!(part1, 11);
+    }
+
+    #[test]
+    fn test_part1() {
+        let part1 = part1(include_str!("input.txt"));
+
+        assert_eq!(part1, 936063);
     }
 
     #[test]
     fn test_example_part2() {
-        let (_part1, part2) = parse_input(
-            // ! Added a 1 to the second line to make the part1 algo work
-            indoc! {"
-                two1nine
-                eightwo1three
-                abcone2threexyz
-                xtwone3four
-                4nineeightseven2
-                zoneight234
-                7pqrstsixteen
-            "},
-        );
+        let part2 = part2(EXAMPLE_INPUT);
 
-        assert_eq!(part2, 281);
+        assert_eq!(part2, 31);
     }
 
     #[test]
-    fn test_main() {
-        let (part1, part2) = main();
+    fn test_part2() {
+        let part2 = part2(include_str!("input.txt"));
 
-        assert_eq!(part1, 54644);
-        assert_eq!(part2, 53348);
+        assert_eq!(part2, 23150395);
     }
 }
