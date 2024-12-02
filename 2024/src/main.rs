@@ -10,16 +10,20 @@ pub struct Args {
     pub day: Option<u8>,
 }
 
+macro_rules! run_day {
+    ($day:expr, $module:ident) => {{
+        let input = include_str!(concat!("day", stringify!($day), "/input.txt"));
+        println!("part1: {}", $module::part1(input));
+        println!("part2: {}", $module::part2(input));
+    }};
+}
+
 fn run_day(day: u8) {
     println!("Running day {}", day);
 
-    // Use a match statement to call the corresponding day module
     match day {
-        1 => {
-            let input = include_str!("day1/input.txt");
-            println!("part1: {}", day1::part1(input));
-            println!("part2: {}", day1::part2(input));
-        }
+        1 => run_day!(1, day1),
+        2 => run_day!(2, day2),
         _ => Default::default(),
     };
 }
