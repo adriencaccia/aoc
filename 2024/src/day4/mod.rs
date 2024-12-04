@@ -1,4 +1,3 @@
-use rayon::prelude::*;
 const SIZE: usize = 140;
 
 pub fn part1(input: &str) -> u32 {
@@ -11,7 +10,6 @@ pub fn part1(input: &str) -> u32 {
 
     // Parallel processing with Rayon
     (0..SIZE)
-        .into_par_iter()
         .map(|i| {
             let mut local_sum = 0;
             for j in 0..SIZE {
@@ -146,7 +144,6 @@ pub fn part2(input: &str) -> u32 {
     });
 
     (0..SIZE - 2)
-        .into_par_iter()
         .map(|i| {
             let mut local_sum = 0;
             for j in 0..SIZE - 2 {
