@@ -16,6 +16,11 @@ strum = { version = "0.25.0", features = ["derive"] }
 gcd = "2.3.0"
 image = "0.24.7"
 rayon = "1.8.0"
+paste = "1.0.15"
 
 [dev-dependencies]
-criterion = "0.5.1"
+criterion = { version = "2.7.2", package = "codspeed-criterion-compat", default-features = false }
+
+[[bench]]
+name = "bench_days"
+harness = false
