@@ -1,12 +1,12 @@
-use lazy_static::lazy_static;
 use regex::Regex;
+use std::sync::LazyLock;
 
-lazy_static! {
-    static ref MUL_REGEX: Regex = Regex::new(r"mul\((?P<first>\d+),(?P<second>\d+)\)",).unwrap();
-    static ref MUL_INSTRUCTIONS_REGEX: Regex =
-        Regex::new(r"(mul\((?P<first>\d+),(?P<second>\d+)\))|(?P<do>do\(\))|(?P<dont>don't\(\))",)
-            .unwrap();
-}
+static MUL_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"mul\((?P<first>\d+),(?P<second>\d+)\)").unwrap());
+static MUL_INSTRUCTIONS_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(mul\((?P<first>\d+),(?P<second>\d+)\))|(?P<do>do\(\))|(?P<dont>don't\(\))")
+        .unwrap()
+});
 
 fn add_mul(sum: &mut u32, capture: regex::Captures<'_>) {
     let first: u32 = capture.name("first").unwrap().as_str().parse().unwrap();
