@@ -1,106 +1,110 @@
+use rayon::prelude::*;
 const SIZE: usize = 140;
 
 pub fn part1(input: &str) -> u32 {
     let mut grid = [[b'.'; SIZE]; SIZE];
+
+    // Use memcpy-like fast initialization
     input.lines().enumerate().for_each(|(i, line)| {
-        line.bytes().enumerate().for_each(|(j, c)| {
-            grid[i][j] = c;
-        });
+        line.bytes().enumerate().for_each(|(j, c)| grid[i][j] = c);
     });
 
-    let mut sum = 0;
-
-    // Reduce bounds checking by using smaller range
-    for i in 0..SIZE {
-        for j in 0..SIZE {
-            // Optimize pattern matching with direct byte comparisons
-            if grid[i][j] == b'X' {
-                // Horizontal XMAS
-                if j + 3 < SIZE
+    // Parallel processing with Rayon
+    (0..SIZE)
+        .into_par_iter()
+        .map(|i| {
+            let mut local_sum = 0;
+            for j in 0..SIZE {
+                // XMAS horizontal pattern
+                if grid[i][j] == b'X'
+                    && j + 3 < SIZE
                     && grid[i][j + 1] == b'M'
                     && grid[i][j + 2] == b'A'
                     && grid[i][j + 3] == b'S'
                 {
-                    sum += 1;
+                    local_sum += 1;
                 }
 
-                // Vertical XMAS
-                if i + 3 < SIZE
+                // XMAS vertical pattern
+                if grid[i][j] == b'X'
+                    && i + 3 < SIZE
                     && grid[i + 1][j] == b'M'
                     && grid[i + 2][j] == b'A'
                     && grid[i + 3][j] == b'S'
                 {
-                    sum += 1;
+                    local_sum += 1;
                 }
 
-                // Diagonal right XMAS
-                if i + 3 < SIZE
+                // XMAS diagonal right pattern
+                if grid[i][j] == b'X'
+                    && i + 3 < SIZE
                     && j + 3 < SIZE
                     && grid[i + 1][j + 1] == b'M'
                     && grid[i + 2][j + 2] == b'A'
                     && grid[i + 3][j + 3] == b'S'
                 {
-                    sum += 1;
+                    local_sum += 1;
                 }
 
-                // Diagonal left XMAS
-                if i + 3 < SIZE
+                // XMAS diagonal left pattern
+                if grid[i][j] == b'X'
+                    && i + 3 < SIZE
                     && j >= 3
                     && grid[i + 1][j - 1] == b'M'
                     && grid[i + 2][j - 2] == b'A'
                     && grid[i + 3][j - 3] == b'S'
                 {
-                    sum += 1;
+                    local_sum += 1;
                 }
-            }
 
-            if grid[i][j] == b'S' {
-                // Similar optimizations for SAMX patterns
-                if j + 3 < SIZE
+                // SAMX horizontal pattern
+                if grid[i][j] == b'S'
+                    && j + 3 < SIZE
                     && grid[i][j + 1] == b'A'
                     && grid[i][j + 2] == b'M'
                     && grid[i][j + 3] == b'X'
                 {
-                    sum += 1;
+                    local_sum += 1;
                 }
 
-                if i + 3 < SIZE
+                // SAMX vertical pattern
+                if grid[i][j] == b'S'
+                    && i + 3 < SIZE
                     && grid[i + 1][j] == b'A'
                     && grid[i + 2][j] == b'M'
                     && grid[i + 3][j] == b'X'
                 {
-                    sum += 1;
+                    local_sum += 1;
                 }
 
-                if i + 3 < SIZE
+                // SAMX diagonal right pattern
+                if grid[i][j] == b'S'
+                    && i + 3 < SIZE
                     && j + 3 < SIZE
                     && grid[i + 1][j + 1] == b'A'
                     && grid[i + 2][j + 2] == b'M'
                     && grid[i + 3][j + 3] == b'X'
                 {
-                    sum += 1;
+                    local_sum += 1;
                 }
 
-                if i + 3 < SIZE
+                // SAMX diagonal left pattern
+                if grid[i][j] == b'S'
+                    && i + 3 < SIZE
                     && j >= 3
                     && grid[i + 1][j - 1] == b'A'
                     && grid[i + 2][j - 2] == b'M'
                     && grid[i + 3][j - 3] == b'X'
                 {
-                    sum += 1;
+                    local_sum += 1;
                 }
             }
-        }
-    }
-
-    sum
+            local_sum
+        })
+        .sum()
 }
 
 fn is_x_mas(grid: &[[u8; SIZE]; SIZE], i: usize, j: usize) -> bool {
-    if i + 2 >= SIZE || j + 2 >= SIZE || grid[i + 1][j + 1] != b'A' {
-        return false;
-    }
-
     let tl = grid[i][j];
     let tr = grid[i][j + 2];
     let bl = grid[i + 2][j];
@@ -140,16 +144,22 @@ pub fn part2(input: &str) -> u32 {
             grid[i][j] = c;
         });
     });
-    let mut sum = 0;
 
-    for i in 0..SIZE - 2 {
-        for j in 0..SIZE - 2 {
-            if is_x_mas(&grid, i, j) {
-                sum += 1;
+    (0..SIZE - 2)
+        .into_par_iter()
+        .map(|i| {
+            let mut local_sum = 0;
+            for j in 0..SIZE - 2 {
+                if grid[i + 1][j + 1] != b'A' {
+                    continue;
+                }
+                if is_x_mas(&grid, i, j) {
+                    local_sum += 1;
+                }
             }
-        }
-    }
-    sum
+            local_sum
+        })
+        .sum()
 }
 
 #[cfg(test)]
