@@ -1,91 +1,94 @@
 const SIZE: usize = 140;
 
 pub fn part1(input: &str) -> u32 {
-    let mut grid = [['.'; SIZE]; SIZE];
-    for (i, line) in input.lines().enumerate() {
-        for (j, c) in line.chars().enumerate() {
+    let mut grid = [[b'.'; SIZE]; SIZE];
+    input.lines().enumerate().for_each(|(i, line)| {
+        line.bytes().enumerate().for_each(|(j, c)| {
             grid[i][j] = c;
-        }
-    }
-    let len = grid.len();
+        });
+    });
+
     let mut sum = 0;
 
-    for i in 0..len {
-        for j in 0..len {
-            match grid[i][j] {
-                'X' => {
-                    // XMAS >
-                    if j + 3 < SIZE
-                        && grid[i][j + 1] == 'M'
-                        && grid[i][j + 2] == 'A'
-                        && grid[i][j + 3] == 'S'
-                    {
-                        sum += 1;
-                    }
-                    // XMAS down
-                    if i + 3 < SIZE
-                        && grid[i + 1][j] == 'M'
-                        && grid[i + 2][j] == 'A'
-                        && grid[i + 3][j] == 'S'
-                    {
-                        sum += 1;
-                    }
-                    // XMAS diag right
-                    if i + 3 < SIZE
-                        && j + 3 < SIZE
-                        && grid[i + 1][j + 1] == 'M'
-                        && grid[i + 2][j + 2] == 'A'
-                        && grid[i + 3][j + 3] == 'S'
-                    {
-                        sum += 1;
-                    }
-                    // XMAS diag left
-                    if j > 2
-                        && i + 3 < SIZE
-                        && grid[i + 1][j - 1] == 'M'
-                        && grid[i + 2][j - 2] == 'A'
-                        && grid[i + 3][j - 3] == 'S'
-                    {
-                        sum += 1;
-                    }
+    // Reduce bounds checking by using smaller range
+    for i in 0..SIZE {
+        for j in 0..SIZE {
+            // Optimize pattern matching with direct byte comparisons
+            if grid[i][j] == b'X' {
+                // Horizontal XMAS
+                if j + 3 < SIZE
+                    && grid[i][j + 1] == b'M'
+                    && grid[i][j + 2] == b'A'
+                    && grid[i][j + 3] == b'S'
+                {
+                    sum += 1;
                 }
-                'S' => {
-                    // SAMX >
-                    if j + 3 < SIZE
-                        && grid[i][j + 1] == 'A'
-                        && grid[i][j + 2] == 'M'
-                        && grid[i][j + 3] == 'X'
-                    {
-                        sum += 1;
-                    }
-                    // SAMX down
-                    if i + 3 < SIZE
-                        && grid[i + 1][j] == 'A'
-                        && grid[i + 2][j] == 'M'
-                        && grid[i + 3][j] == 'X'
-                    {
-                        sum += 1;
-                    }
-                    // SAMX diag right
-                    if i + 3 < SIZE
-                        && j + 3 < SIZE
-                        && grid[i + 1][j + 1] == 'A'
-                        && grid[i + 2][j + 2] == 'M'
-                        && grid[i + 3][j + 3] == 'X'
-                    {
-                        sum += 1;
-                    }
-                    // SAMX diag left
-                    if j > 2
-                        && i + 3 < SIZE
-                        && grid[i + 1][j - 1] == 'A'
-                        && grid[i + 2][j - 2] == 'M'
-                        && grid[i + 3][j - 3] == 'X'
-                    {
-                        sum += 1;
-                    }
+
+                // Vertical XMAS
+                if i + 3 < SIZE
+                    && grid[i + 1][j] == b'M'
+                    && grid[i + 2][j] == b'A'
+                    && grid[i + 3][j] == b'S'
+                {
+                    sum += 1;
                 }
-                _ => {}
+
+                // Diagonal right XMAS
+                if i + 3 < SIZE
+                    && j + 3 < SIZE
+                    && grid[i + 1][j + 1] == b'M'
+                    && grid[i + 2][j + 2] == b'A'
+                    && grid[i + 3][j + 3] == b'S'
+                {
+                    sum += 1;
+                }
+
+                // Diagonal left XMAS
+                if i + 3 < SIZE
+                    && j >= 3
+                    && grid[i + 1][j - 1] == b'M'
+                    && grid[i + 2][j - 2] == b'A'
+                    && grid[i + 3][j - 3] == b'S'
+                {
+                    sum += 1;
+                }
+            }
+
+            if grid[i][j] == b'S' {
+                // Similar optimizations for SAMX patterns
+                if j + 3 < SIZE
+                    && grid[i][j + 1] == b'A'
+                    && grid[i][j + 2] == b'M'
+                    && grid[i][j + 3] == b'X'
+                {
+                    sum += 1;
+                }
+
+                if i + 3 < SIZE
+                    && grid[i + 1][j] == b'A'
+                    && grid[i + 2][j] == b'M'
+                    && grid[i + 3][j] == b'X'
+                {
+                    sum += 1;
+                }
+
+                if i + 3 < SIZE
+                    && j + 3 < SIZE
+                    && grid[i + 1][j + 1] == b'A'
+                    && grid[i + 2][j + 2] == b'M'
+                    && grid[i + 3][j + 3] == b'X'
+                {
+                    sum += 1;
+                }
+
+                if i + 3 < SIZE
+                    && j >= 3
+                    && grid[i + 1][j - 1] == b'A'
+                    && grid[i + 2][j - 2] == b'M'
+                    && grid[i + 3][j - 3] == b'X'
+                {
+                    sum += 1;
+                }
             }
         }
     }
@@ -93,8 +96,8 @@ pub fn part1(input: &str) -> u32 {
     sum
 }
 
-fn is_x_mas(grid: &[[char; SIZE]; SIZE], i: usize, j: usize) -> bool {
-    if i + 2 >= SIZE || j + 2 >= SIZE || grid[i + 1][j + 1] != 'A' {
+fn is_x_mas(grid: &[[u8; SIZE]; SIZE], i: usize, j: usize) -> bool {
+    if i + 2 >= SIZE || j + 2 >= SIZE || grid[i + 1][j + 1] != b'A' {
         return false;
     }
 
@@ -106,42 +109,41 @@ fn is_x_mas(grid: &[[char; SIZE]; SIZE], i: usize, j: usize) -> bool {
     // M.S
     // .A.
     // M.S
-    if tl == 'M' && tr == 'S' && bl == 'M' && br == 'S' {
+    if tl == b'M' && tr == b'S' && bl == b'M' && br == b'S' {
         return true;
     }
     // M.M
     // .A.
     // S.S
-    if tl == 'M' && tr == 'M' && bl == 'S' && br == 'S' {
+    if tl == b'M' && tr == b'M' && bl == b'S' && br == b'S' {
         return true;
     }
     // S.S
     // .A.
     // M.M
-    if tl == 'S' && tr == 'S' && bl == 'M' && br == 'M' {
+    if tl == b'S' && tr == b'S' && bl == b'M' && br == b'M' {
         return true;
     }
     // S.M
     // .A.
     // S.M
-    if tl == 'S' && tr == 'M' && bl == 'S' && br == 'M' {
+    if tl == b'S' && tr == b'M' && bl == b'S' && br == b'M' {
         return true;
     }
     false
 }
 
 pub fn part2(input: &str) -> u32 {
-    let mut grid = [['.'; SIZE]; SIZE];
-    for (i, line) in input.lines().enumerate() {
-        for (j, c) in line.chars().enumerate() {
+    let mut grid = [[b'.'; SIZE]; SIZE];
+    input.lines().enumerate().for_each(|(i, line)| {
+        line.bytes().enumerate().for_each(|(j, c)| {
             grid[i][j] = c;
-        }
-    }
-    let len = grid.len();
+        });
+    });
     let mut sum = 0;
 
-    for i in 0..len {
-        for j in 0..len {
+    for i in 0..SIZE - 2 {
+        for j in 0..SIZE - 2 {
             if is_x_mas(&grid, i, j) {
                 sum += 1;
             }
