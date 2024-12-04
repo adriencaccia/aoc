@@ -1,85 +1,88 @@
-fn get(grid: &[Vec<char>], i: usize, j: usize) -> Option<&char> {
-    grid.get(i).and_then(|line| line.get(j))
-}
+const SIZE: usize = 140;
 
 pub fn part1(input: &str) -> u32 {
-    let grid: Vec<Vec<_>> = input.lines().map(|l| l.chars().collect()).collect();
+    let mut grid = [['.'; SIZE]; SIZE];
+    for (i, line) in input.lines().enumerate() {
+        for (j, c) in line.chars().enumerate() {
+            grid[i][j] = c;
+        }
+    }
     let len = grid.len();
     let mut sum = 0;
 
     for i in 0..len {
         for j in 0..len {
-            match get(&grid, i, j) {
-                Some('X') => {
+            match grid[i][j] {
+                'X' => {
                     // XMAS >
-                    if let Some('M') = get(&grid, i, j + 1) {
-                        if let Some('A') = get(&grid, i, j + 2) {
-                            if let Some('S') = get(&grid, i, j + 3) {
-                                sum += 1;
-                            }
-                        }
+                    if j + 3 < SIZE
+                        && grid[i][j + 1] == 'M'
+                        && grid[i][j + 2] == 'A'
+                        && grid[i][j + 3] == 'S'
+                    {
+                        sum += 1;
                     }
                     // XMAS down
-                    if let Some('M') = get(&grid, i + 1, j) {
-                        if let Some('A') = get(&grid, i + 2, j) {
-                            if let Some('S') = get(&grid, i + 3, j) {
-                                sum += 1;
-                            }
-                        }
+                    if i + 3 < SIZE
+                        && grid[i + 1][j] == 'M'
+                        && grid[i + 2][j] == 'A'
+                        && grid[i + 3][j] == 'S'
+                    {
+                        sum += 1;
                     }
                     // XMAS diag right
-                    if let Some('M') = get(&grid, i + 1, j + 1) {
-                        if let Some('A') = get(&grid, i + 2, j + 2) {
-                            if let Some('S') = get(&grid, i + 3, j + 3) {
-                                sum += 1;
-                            }
-                        }
+                    if i + 3 < SIZE
+                        && j + 3 < SIZE
+                        && grid[i + 1][j + 1] == 'M'
+                        && grid[i + 2][j + 2] == 'A'
+                        && grid[i + 3][j + 3] == 'S'
+                    {
+                        sum += 1;
                     }
                     // XMAS diag left
-                    if j > 2 {
-                        if let Some('M') = get(&grid, i + 1, j - 1) {
-                            if let Some('A') = get(&grid, i + 2, j - 2) {
-                                if let Some('S') = get(&grid, i + 3, j - 3) {
-                                    sum += 1;
-                                }
-                            }
-                        }
+                    if j > 2
+                        && i + 3 < SIZE
+                        && grid[i + 1][j - 1] == 'M'
+                        && grid[i + 2][j - 2] == 'A'
+                        && grid[i + 3][j - 3] == 'S'
+                    {
+                        sum += 1;
                     }
                 }
-                Some('S') => {
+                'S' => {
                     // SAMX >
-                    if let Some('A') = get(&grid, i, j + 1) {
-                        if let Some('M') = get(&grid, i, j + 2) {
-                            if let Some('X') = get(&grid, i, j + 3) {
-                                sum += 1;
-                            }
-                        }
+                    if j + 3 < SIZE
+                        && grid[i][j + 1] == 'A'
+                        && grid[i][j + 2] == 'M'
+                        && grid[i][j + 3] == 'X'
+                    {
+                        sum += 1;
                     }
                     // SAMX down
-                    if let Some('A') = get(&grid, i + 1, j) {
-                        if let Some('M') = get(&grid, i + 2, j) {
-                            if let Some('X') = get(&grid, i + 3, j) {
-                                sum += 1;
-                            }
-                        }
+                    if i + 3 < SIZE
+                        && grid[i + 1][j] == 'A'
+                        && grid[i + 2][j] == 'M'
+                        && grid[i + 3][j] == 'X'
+                    {
+                        sum += 1;
                     }
                     // SAMX diag right
-                    if let Some('A') = get(&grid, i + 1, j + 1) {
-                        if let Some('M') = get(&grid, i + 2, j + 2) {
-                            if let Some('X') = get(&grid, i + 3, j + 3) {
-                                sum += 1;
-                            }
-                        }
+                    if i + 3 < SIZE
+                        && j + 3 < SIZE
+                        && grid[i + 1][j + 1] == 'A'
+                        && grid[i + 2][j + 2] == 'M'
+                        && grid[i + 3][j + 3] == 'X'
+                    {
+                        sum += 1;
                     }
                     // SAMX diag left
-                    if j > 2 {
-                        if let Some('A') = get(&grid, i + 1, j - 1) {
-                            if let Some('M') = get(&grid, i + 2, j - 2) {
-                                if let Some('X') = get(&grid, i + 3, j - 3) {
-                                    sum += 1;
-                                }
-                            }
-                        }
+                    if j > 2
+                        && i + 3 < SIZE
+                        && grid[i + 1][j - 1] == 'A'
+                        && grid[i + 2][j - 2] == 'M'
+                        && grid[i + 3][j - 3] == 'X'
+                    {
+                        sum += 1;
                     }
                 }
                 _ => {}
@@ -90,52 +93,50 @@ pub fn part1(input: &str) -> u32 {
     sum
 }
 
-fn is_x_mas(grid: &[Vec<char>], i: usize, j: usize) -> bool {
-    if grid.get(i + 2).is_none() {
-        return false;
-    }
-    if grid.get(i + 2).unwrap().get(j + 2).is_none() {
-        return false;
-    }
-    let c = grid.get(i + 1).unwrap().get(j + 1).unwrap();
-    if *c != 'A' {
+fn is_x_mas(grid: &[[char; SIZE]; SIZE], i: usize, j: usize) -> bool {
+    if i + 2 >= SIZE || j + 2 >= SIZE || grid[i + 1][j + 1] != 'A' {
         return false;
     }
 
-    let tl = grid.get(i).unwrap().get(j).unwrap();
-    let tr = grid.get(i).unwrap().get(j + 2).unwrap();
-    let bl = grid.get(i + 2).unwrap().get(j).unwrap();
-    let br = grid.get(i + 2).unwrap().get(j + 2).unwrap();
+    let tl = grid[i][j];
+    let tr = grid[i][j + 2];
+    let bl = grid[i + 2][j];
+    let br = grid[i + 2][j + 2];
 
     // M.S
     // .A.
     // M.S
-    if *tl == 'M' && *tr == 'S' && *bl == 'M' && *br == 'S' {
+    if tl == 'M' && tr == 'S' && bl == 'M' && br == 'S' {
         return true;
     }
     // M.M
     // .A.
     // S.S
-    if *tl == 'M' && *tr == 'M' && *bl == 'S' && *br == 'S' {
+    if tl == 'M' && tr == 'M' && bl == 'S' && br == 'S' {
         return true;
     }
     // S.S
     // .A.
     // M.M
-    if *tl == 'S' && *tr == 'S' && *bl == 'M' && *br == 'M' {
+    if tl == 'S' && tr == 'S' && bl == 'M' && br == 'M' {
         return true;
     }
     // S.M
     // .A.
     // S.M
-    if *tl == 'S' && *tr == 'M' && *bl == 'S' && *br == 'M' {
+    if tl == 'S' && tr == 'M' && bl == 'S' && br == 'M' {
         return true;
     }
     false
 }
 
 pub fn part2(input: &str) -> u32 {
-    let grid: Vec<Vec<_>> = input.lines().map(|l| l.chars().collect()).collect();
+    let mut grid = [['.'; SIZE]; SIZE];
+    for (i, line) in input.lines().enumerate() {
+        for (j, c) in line.chars().enumerate() {
+            grid[i][j] = c;
+        }
+    }
     let len = grid.len();
     let mut sum = 0;
 
