@@ -1,95 +1,82 @@
 const SIZE: usize = 140;
 
-pub fn part1(input: &str) -> u32 {
-    let mut grid = [[b'.'; SIZE]; SIZE];
-    input.lines().enumerate().for_each(|(i, line)| {
-        line.bytes().enumerate().for_each(|(j, c)| {
-            grid[i][j] = c;
-        });
-    });
+pub fn part1(input: &str) -> u16 {
+    // Use unsafe for zero-initialization and potential performance gains
+    let mut grid = unsafe { std::mem::zeroed::<[[u8; SIZE]; SIZE]>() };
+
+    // Faster grid population using direct memory access
+    unsafe {
+        let mut ptr = grid.as_mut_ptr() as *mut u8;
+        for line in input.lines() {
+            std::ptr::copy_nonoverlapping(line.as_bytes().as_ptr(), ptr, line.len());
+            ptr = ptr.add(SIZE);
+        }
+    }
 
     let mut sum = 0;
 
-    // Reduce bounds checking by using smaller range
+    // Adjusted bounds to prevent overflow
     for i in 0..SIZE {
         for j in 0..SIZE {
-            // Optimize pattern matching with direct byte comparisons
-            if grid[i][j] == b'X' {
-                // Horizontal XMAS
-                if j + 3 < SIZE
-                    && grid[i][j + 1] == b'M'
-                    && grid[i][j + 2] == b'A'
-                    && grid[i][j + 3] == b'S'
-                {
-                    sum += 1;
-                }
+            // Horizontal XMAS (right)
+            sum += (j < SIZE - 3
+                && grid[i][j] == b'X'
+                && grid[i][j + 1] == b'M'
+                && grid[i][j + 2] == b'A'
+                && grid[i][j + 3] == b'S') as u16;
 
-                // Vertical XMAS
-                if i + 3 < SIZE
-                    && grid[i + 1][j] == b'M'
-                    && grid[i + 2][j] == b'A'
-                    && grid[i + 3][j] == b'S'
-                {
-                    sum += 1;
-                }
+            // Vertical XMAS (down)
+            sum += (i < SIZE - 3
+                && grid[i][j] == b'X'
+                && grid[i + 1][j] == b'M'
+                && grid[i + 2][j] == b'A'
+                && grid[i + 3][j] == b'S') as u16;
 
-                // Diagonal right XMAS
-                if i + 3 < SIZE
-                    && j + 3 < SIZE
-                    && grid[i + 1][j + 1] == b'M'
-                    && grid[i + 2][j + 2] == b'A'
-                    && grid[i + 3][j + 3] == b'S'
-                {
-                    sum += 1;
-                }
+            // Diagonal right XMAS
+            sum += (i < SIZE - 3
+                && j < SIZE - 3
+                && grid[i][j] == b'X'
+                && grid[i + 1][j + 1] == b'M'
+                && grid[i + 2][j + 2] == b'A'
+                && grid[i + 3][j + 3] == b'S') as u16;
 
-                // Diagonal left XMAS
-                if i + 3 < SIZE
-                    && j >= 3
-                    && grid[i + 1][j - 1] == b'M'
-                    && grid[i + 2][j - 2] == b'A'
-                    && grid[i + 3][j - 3] == b'S'
-                {
-                    sum += 1;
-                }
-            }
+            // Diagonal left XMAS (with bounds check)
+            sum += (i < SIZE - 3
+                && j >= 3
+                && grid[i][j] == b'X'
+                && grid[i + 1][j - 1] == b'M'
+                && grid[i + 2][j - 2] == b'A'
+                && grid[i + 3][j - 3] == b'S') as u16;
 
-            if grid[i][j] == b'S' {
-                // Similar optimizations for SAMX patterns
-                if j + 3 < SIZE
-                    && grid[i][j + 1] == b'A'
-                    && grid[i][j + 2] == b'M'
-                    && grid[i][j + 3] == b'X'
-                {
-                    sum += 1;
-                }
+            // Horizontal SAMX (right)
+            sum += (j < SIZE - 3
+                && grid[i][j] == b'S'
+                && grid[i][j + 1] == b'A'
+                && grid[i][j + 2] == b'M'
+                && grid[i][j + 3] == b'X') as u16;
 
-                if i + 3 < SIZE
-                    && grid[i + 1][j] == b'A'
-                    && grid[i + 2][j] == b'M'
-                    && grid[i + 3][j] == b'X'
-                {
-                    sum += 1;
-                }
+            // Vertical SAMX (down)
+            sum += (i < SIZE - 3
+                && grid[i][j] == b'S'
+                && grid[i + 1][j] == b'A'
+                && grid[i + 2][j] == b'M'
+                && grid[i + 3][j] == b'X') as u16;
 
-                if i + 3 < SIZE
-                    && j + 3 < SIZE
-                    && grid[i + 1][j + 1] == b'A'
-                    && grid[i + 2][j + 2] == b'M'
-                    && grid[i + 3][j + 3] == b'X'
-                {
-                    sum += 1;
-                }
+            // Diagonal right SAMX
+            sum += (i < SIZE - 3
+                && j < SIZE - 3
+                && grid[i][j] == b'S'
+                && grid[i + 1][j + 1] == b'A'
+                && grid[i + 2][j + 2] == b'M'
+                && grid[i + 3][j + 3] == b'X') as u16;
 
-                if i + 3 < SIZE
-                    && j >= 3
-                    && grid[i + 1][j - 1] == b'A'
-                    && grid[i + 2][j - 2] == b'M'
-                    && grid[i + 3][j - 3] == b'X'
-                {
-                    sum += 1;
-                }
-            }
+            // Diagonal left SAMX (with bounds check)
+            sum += (i < SIZE - 3
+                && j >= 3
+                && grid[i][j] == b'S'
+                && grid[i + 1][j - 1] == b'A'
+                && grid[i + 2][j - 2] == b'M'
+                && grid[i + 3][j - 3] == b'X') as u16;
         }
     }
 
@@ -98,61 +85,48 @@ pub fn part1(input: &str) -> u32 {
 
 #[inline(always)]
 fn is_x_mas(grid: &[[u8; SIZE]; SIZE], i: usize, j: usize) -> bool {
-    if grid[i + 1][j + 1] != b'A' {
-        return false;
-    }
-
-    let tl = grid[i][j];
-    let tr = grid[i][j + 2];
-    let bl = grid[i + 2][j];
-    let br = grid[i + 2][j + 2];
-
-    // M.S
-    // .A.
-    // M.S
-    if tl == b'M' && tr == b'S' && bl == b'M' && br == b'S' {
-        return true;
-    }
-    // M.M
-    // .A.
-    // S.S
-    if tl == b'M' && tr == b'M' && bl == b'S' && br == b'S' {
-        return true;
-    }
-    // S.S
-    // .A.
-    // M.M
-    if tl == b'S' && tr == b'S' && bl == b'M' && br == b'M' {
-        return true;
-    }
-    // S.M
-    // .A.
-    // S.M
-    if tl == b'S' && tr == b'M' && bl == b'S' && br == b'M' {
-        return true;
-    }
-    false
+    // Early quick exit
+    grid[i + 1][j + 1] == b'A'
+        && ((grid[i][j] == b'M'
+            && grid[i][j + 2] == b'S'
+            && grid[i + 2][j] == b'M'
+            && grid[i + 2][j + 2] == b'S')
+            || (grid[i][j] == b'M'
+                && grid[i][j + 2] == b'M'
+                && grid[i + 2][j] == b'S'
+                && grid[i + 2][j + 2] == b'S')
+            || (grid[i][j] == b'S'
+                && grid[i][j + 2] == b'S'
+                && grid[i + 2][j] == b'M'
+                && grid[i + 2][j + 2] == b'M')
+            || (grid[i][j] == b'S'
+                && grid[i][j + 2] == b'M'
+                && grid[i + 2][j] == b'S'
+                && grid[i + 2][j + 2] == b'M'))
 }
 
-pub fn part2(input: &str) -> u32 {
-    let mut grid = [[b'.'; SIZE]; SIZE];
-    input.lines().enumerate().for_each(|(i, line)| {
-        line.bytes().enumerate().for_each(|(j, c)| {
-            grid[i][j] = c;
-        });
-    });
+pub fn part2(input: &str) -> u16 {
+    // Use same unsafe zero-initialization technique
+    let mut grid = unsafe { std::mem::zeroed::<[[u8; SIZE]; SIZE]>() };
+
+    // Faster grid population using direct memory access
+    unsafe {
+        let mut ptr = grid.as_mut_ptr() as *mut u8;
+        for line in input.lines() {
+            std::ptr::copy_nonoverlapping(line.as_bytes().as_ptr(), ptr, line.len());
+            ptr = ptr.add(SIZE);
+        }
+    }
+
     let mut sum = 0;
 
     for i in 0..SIZE - 2 {
         for j in 0..SIZE - 2 {
-            if is_x_mas(&grid, i, j) {
-                sum += 1;
-            }
+            sum += is_x_mas(&grid, i, j) as u16;
         }
     }
     sum
 }
-
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
