@@ -1,10 +1,5 @@
 fn get(grid: &[Vec<char>], i: usize, j: usize) -> Option<&char> {
-    if let Some(line) = grid.get(i) {
-        if let Some(char) = line.get(j) {
-            return Some(char);
-        }
-    }
-    None
+    grid.get(i).and_then(|line| line.get(j))
 }
 
 pub fn part1(input: &str) -> u32 {
@@ -68,7 +63,7 @@ pub fn part1(input: &str) -> u32 {
                             }
                         }
                     }
-                    // SAMX diag
+                    // SAMX diag right
                     if let Some('A') = get(&grid, i + 1, j + 1) {
                         if let Some('M') = get(&grid, i + 2, j + 2) {
                             if let Some('X') = get(&grid, i + 3, j + 3) {
