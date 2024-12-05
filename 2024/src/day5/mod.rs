@@ -2,7 +2,10 @@ use std::{cmp::Ordering, collections::HashSet};
 
 use itertools::Itertools;
 
-fn parse(input: &str) -> (HashSet<(u8, u8)>, Vec<Vec<u8>>) {
+const UPDATE_MAX_SIZE: usize = 23; // real size is 23, we go to 24 to store the middle value in the 24th position
+const UPDATES_LEN: usize = 187;
+
+fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 1]; UPDATES_LEN]) {
     let mut it = input.split("\n\n");
     let rules = HashSet::from_iter(it.next().unwrap().lines().map(|l| {
         l.split('|')
@@ -11,22 +14,35 @@ fn parse(input: &str) -> (HashSet<(u8, u8)>, Vec<Vec<u8>>) {
             .unwrap()
     }));
 
-    let updates = it
-        .next()
-        .unwrap()
-        .lines()
-        .map(|l| l.split(',').map(|v| v.parse().unwrap()).collect())
-        .collect();
+    let mut updates = [[0; UPDATE_MAX_SIZE + 1]; UPDATES_LEN];
+    it.next().unwrap().lines().enumerate().for_each(|(i, l)| {
+        let mut peekable = l.split(',').peekable();
+        let mut j = 0;
+        while let Some(v) = peekable.peek() {
+            updates[i][j] = v.parse().unwrap();
+            j += 1;
+            peekable.next();
+        }
+        updates[i][UPDATE_MAX_SIZE] = updates[i][j / 2];
+
+        // l.split(',').
+        // .enumerate()
+        // .for_each(|(j, v)| {
+        //     updates[i][j] = v.parse().unwrap();
+        // })
+    });
 
     (rules, updates)
 }
 
 fn is_update_correct_order(update: &[u8], rules: &HashSet<(u8, u8)>) -> bool {
-    let len = update.len();
-    for i in 0..len - 1 {
-        for j in i..len {
-            let a = update[i];
+    for i in 0..UPDATE_MAX_SIZE - 1 {
+        let a = update[i];
+        for j in i + 1..UPDATE_MAX_SIZE {
             let b = update[j];
+            if b == 0 {
+                break;
+            }
             if rules.contains(&(b, a)) {
                 return false;
             }
@@ -44,12 +60,15 @@ pub fn part1(input: &str) -> u16 {
             return acc;
         }
 
-        acc + update[update.len() / 2] as u16
+        acc + update[UPDATE_MAX_SIZE] as u16
     })
 }
 
 fn sort_update(update: &mut [u8], rules: &HashSet<(u8, u8)>) {
     update.sort_by(|a, b| {
+        if *a == 0 || *b == 0 {
+            return Ordering::Equal;
+        }
         if rules.contains(&(*a, *b)) {
             return Ordering::Less;
         }
@@ -69,7 +88,7 @@ pub fn part2(input: &str) -> u16 {
         }
         sort_update(&mut update, &rules);
 
-        acc + update[update.len() / 2] as u16
+        acc + update[UPDATE_MAX_SIZE] as u16
     })
 }
 
