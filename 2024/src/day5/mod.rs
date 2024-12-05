@@ -2,10 +2,10 @@ use std::{cmp::Ordering, collections::HashSet};
 
 use itertools::Itertools;
 
-const UPDATE_MAX_SIZE: usize = 23; // real size is 23, we go to 24 to store the middle value in the 24th position
+const UPDATE_MAX_SIZE: usize = 23; // real size is 23, we go to 24 to store the middle value in the 24th position, 25 store the length of the update
 const UPDATES_LEN: usize = 187;
 
-fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 1]; UPDATES_LEN]) {
+fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 2]; UPDATES_LEN]) {
     let mut it = input.split("\n\n");
     let rules = HashSet::from_iter(it.next().unwrap().lines().map(|l| {
         l.split('|')
@@ -14,7 +14,7 @@ fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 1]; UPDATES
             .unwrap()
     }));
 
-    let mut updates = [[0; UPDATE_MAX_SIZE + 1]; UPDATES_LEN];
+    let mut updates = [[0; UPDATE_MAX_SIZE + 2]; UPDATES_LEN];
     it.next().unwrap().lines().enumerate().for_each(|(i, l)| {
         let mut peekable = l.split(',').peekable();
         let mut j = 0;
@@ -24,12 +24,7 @@ fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 1]; UPDATES
             peekable.next();
         }
         updates[i][UPDATE_MAX_SIZE] = updates[i][j / 2];
-
-        // l.split(',').
-        // .enumerate()
-        // .for_each(|(j, v)| {
-        //     updates[i][j] = v.parse().unwrap();
-        // })
+        updates[i][UPDATE_MAX_SIZE + 1] = j as u8;
     });
 
     (rules, updates)
@@ -65,7 +60,9 @@ pub fn part1(input: &str) -> u16 {
 }
 
 fn sort_update(update: &mut [u8], rules: &HashSet<(u8, u8)>) {
-    update.sort_by(|a, b| {
+    // only sort the first update[UPDATE_MAX_SIZE+1] elements
+    let len = update[UPDATE_MAX_SIZE + 1] as usize;
+    update[..len].sort_by(|a, b| {
         if *a == 0 || *b == 0 {
             return Ordering::Equal;
         }
@@ -76,7 +73,8 @@ fn sort_update(update: &mut [u8], rules: &HashSet<(u8, u8)>) {
             return Ordering::Greater;
         }
         Ordering::Equal
-    })
+    });
+    update[UPDATE_MAX_SIZE] = update[update[UPDATE_MAX_SIZE + 1] as usize / 2];
 }
 
 pub fn part2(input: &str) -> u16 {
