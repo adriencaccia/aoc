@@ -1,18 +1,18 @@
-use std::{cmp::Ordering, collections::HashSet};
-
-use itertools::Itertools;
-
 const UPDATE_MAX_SIZE: usize = 23; // real size is 23, we store 2 extra values. 1 for the middle value and 1 for the size of the update
 const UPDATES_LEN: usize = 187;
+const MAX_SIZE: usize = 100;
+type AdjMatrix = [[bool; MAX_SIZE]; MAX_SIZE];
 
-fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 2]; UPDATES_LEN]) {
+fn parse(input: &str) -> (AdjMatrix, [[u8; UPDATE_MAX_SIZE + 2]; UPDATES_LEN]) {
     let mut it = input.split("\n\n");
-    let rules = HashSet::from_iter(it.next().unwrap().lines().map(|l| {
-        l.split('|')
-            .map(|v| v.parse().unwrap())
-            .collect_tuple()
-            .unwrap()
-    }));
+    let mut matrix = [[false; MAX_SIZE]; MAX_SIZE];
+
+    it.next().unwrap().lines().for_each(|l| {
+        let mut parts = l.split('|');
+        let a: usize = parts.next().unwrap().parse().unwrap();
+        let b: usize = parts.next().unwrap().parse().unwrap();
+        matrix[a][b] = true;
+    });
 
     let mut updates = [[0; UPDATE_MAX_SIZE + 2]; UPDATES_LEN];
     it.next().unwrap().lines().enumerate().for_each(|(i, l)| {
@@ -27,17 +27,17 @@ fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 2]; UPDATES
         updates[i][UPDATE_MAX_SIZE + 1] = j as u8;
     });
 
-    (rules, updates)
+    (matrix, updates)
 }
 
-fn is_update_correct_order(update: &[u8], rules: &HashSet<(u8, u8)>) -> bool {
+fn is_update_correct_order(update: &[u8], matrix: &AdjMatrix) -> bool {
     for i in 0..UPDATE_MAX_SIZE - 1 {
         let a = update[i];
         for &b in &update[i + 1..UPDATE_MAX_SIZE] {
             if b == 0 {
                 break;
             }
-            if rules.contains(&(b, a)) {
+            if matrix[b as usize][a as usize] {
                 return false;
             }
         }
@@ -47,53 +47,46 @@ fn is_update_correct_order(update: &[u8], rules: &HashSet<(u8, u8)>) -> bool {
 }
 
 pub fn part1(input: &str) -> u16 {
-    let (rules, updates) = parse(input);
+    let (matrix, updates) = parse(input);
 
     updates.into_iter().fold(0, |acc, update| {
-        if !is_update_correct_order(&update, &rules) {
-            return acc;
+        acc + if is_update_correct_order(&update, &matrix) {
+            update[UPDATE_MAX_SIZE] as u16
+        } else {
+            0
         }
-
-        acc + update[UPDATE_MAX_SIZE] as u16
     })
 }
 
-fn sort_update(update: &mut [u8], rules: &HashSet<(u8, u8)>) {
-    // only sort the first update[UPDATE_MAX_SIZE+1] elements
+fn sort_update(update: &mut [u8], matrix: &AdjMatrix) {
     let len = update[UPDATE_MAX_SIZE + 1] as usize;
-    update[..len].sort_by(|a, b| {
-        if *a == 0 || *b == 0 {
-            return Ordering::Equal;
+    for _i in 0..len {
+        for j in 0..len - 1 {
+            let a = update[j] as usize;
+            let b = update[j + 1] as usize;
+            if matrix[b][a] {
+                update.swap(j, j + 1);
+            }
         }
-        if rules.contains(&(*a, *b)) {
-            return Ordering::Less;
-        }
-        if rules.contains(&(*b, *a)) {
-            return Ordering::Greater;
-        }
-        Ordering::Equal
-    });
-    update[UPDATE_MAX_SIZE] = update[update[UPDATE_MAX_SIZE + 1] as usize / 2];
+    }
+    update[UPDATE_MAX_SIZE] = update[len / 2];
 }
 
 pub fn part2(input: &str) -> u16 {
-    let (rules, updates) = parse(input);
+    let (matrix, updates) = parse(input);
 
     updates.into_iter().fold(0, |acc, mut update| {
-        if is_update_correct_order(&update, &rules) {
+        if is_update_correct_order(&update, &matrix) {
             return acc;
         }
-        sort_update(&mut update, &rules);
-
+        sort_update(&mut update, &matrix);
         acc + update[UPDATE_MAX_SIZE] as u16
     })
 }
-
 #[cfg(test)]
 mod tests {
-    use indoc::indoc;
-
     use super::*;
+    use indoc::indoc;
 
     const EXAMPLE_INPUT: &str = indoc! {"
     47|53
@@ -128,29 +121,21 @@ mod tests {
 
     #[test]
     fn test_example_part1() {
-        let part1 = part1(EXAMPLE_INPUT);
-
-        assert_eq!(part1, 143);
+        assert_eq!(part1(EXAMPLE_INPUT), 143);
     }
 
     #[test]
     fn test_part1() {
-        let part1 = part1(include_str!("input.txt"));
-
-        assert_eq!(part1, 4578);
+        assert_eq!(part1(include_str!("input.txt")), 4578);
     }
 
     #[test]
     fn test_example_part2() {
-        let part2 = part2(EXAMPLE_INPUT);
-
-        assert_eq!(part2, 123);
+        assert_eq!(part2(EXAMPLE_INPUT), 123);
     }
 
     #[test]
     fn test_part2() {
-        let part2 = part2(include_str!("input.txt"));
-
-        assert_eq!(part2, 6179);
+        assert_eq!(part2(include_str!("input.txt")), 6179);
     }
 }
