@@ -2,10 +2,10 @@ use std::{cmp::Ordering, collections::HashSet};
 
 use itertools::Itertools;
 
-const UPDATE_MAX_SIZE: usize = 23; // real size is 23, we go to 24 to store the middle value in the 24th position, 25 store the length of the update
+const UPDATE_MAX_SIZE: usize = 23; // real size is 23, we go to 24 to store additional information
 const UPDATES_LEN: usize = 187;
 
-fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 2]; UPDATES_LEN]) {
+fn parse_part1(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 1]; UPDATES_LEN]) {
     let mut it = input.split("\n\n");
     let rules = HashSet::from_iter(it.next().unwrap().lines().map(|l| {
         l.split('|')
@@ -14,7 +14,7 @@ fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 2]; UPDATES
             .unwrap()
     }));
 
-    let mut updates = [[0; UPDATE_MAX_SIZE + 2]; UPDATES_LEN];
+    let mut updates = [[0; UPDATE_MAX_SIZE + 1]; UPDATES_LEN];
     it.next().unwrap().lines().enumerate().for_each(|(i, l)| {
         let mut peekable = l.split(',').peekable();
         let mut j = 0;
@@ -23,8 +23,31 @@ fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 2]; UPDATES
             j += 1;
             peekable.next();
         }
-        updates[i][UPDATE_MAX_SIZE] = updates[i][j / 2];
-        updates[i][UPDATE_MAX_SIZE + 1] = j as u8;
+        updates[i][UPDATE_MAX_SIZE] = updates[i][j / 2]; // store the middle value in the last position
+    });
+
+    (rules, updates)
+}
+
+fn parse_part2(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 1]; UPDATES_LEN]) {
+    let mut it = input.split("\n\n");
+    let rules = HashSet::from_iter(it.next().unwrap().lines().map(|l| {
+        l.split('|')
+            .map(|v| v.parse().unwrap())
+            .collect_tuple()
+            .unwrap()
+    }));
+
+    let mut updates = [[0; UPDATE_MAX_SIZE + 1]; UPDATES_LEN];
+    it.next().unwrap().lines().enumerate().for_each(|(i, l)| {
+        let mut peekable = l.split(',').peekable();
+        let mut j = 0;
+        while let Some(v) = peekable.peek() {
+            updates[i][j] = v.parse().unwrap();
+            j += 1;
+            peekable.next();
+        }
+        updates[i][UPDATE_MAX_SIZE] = j as u8; // store the length of the update in the last position
     });
 
     (rules, updates)
@@ -33,8 +56,7 @@ fn parse(input: &str) -> (HashSet<(u8, u8)>, [[u8; UPDATE_MAX_SIZE + 2]; UPDATES
 fn is_update_correct_order(update: &[u8], rules: &HashSet<(u8, u8)>) -> bool {
     for i in 0..UPDATE_MAX_SIZE - 1 {
         let a = update[i];
-        for j in i + 1..UPDATE_MAX_SIZE {
-            let b = update[j];
+        for &b in &update[i + 1..UPDATE_MAX_SIZE] {
             if b == 0 {
                 break;
             }
@@ -48,7 +70,7 @@ fn is_update_correct_order(update: &[u8], rules: &HashSet<(u8, u8)>) -> bool {
 }
 
 pub fn part1(input: &str) -> u16 {
-    let (rules, updates) = parse(input);
+    let (rules, updates) = parse_part1(input);
 
     updates.into_iter().fold(0, |acc, update| {
         if !is_update_correct_order(&update, &rules) {
@@ -60,12 +82,9 @@ pub fn part1(input: &str) -> u16 {
 }
 
 fn sort_update(update: &mut [u8], rules: &HashSet<(u8, u8)>) {
-    // only sort the first update[UPDATE_MAX_SIZE+1] elements
-    let len = update[UPDATE_MAX_SIZE + 1] as usize;
+    // only sort the first update[UPDATE_MAX_SIZE] elements
+    let len = update[UPDATE_MAX_SIZE] as usize;
     update[..len].sort_by(|a, b| {
-        if *a == 0 || *b == 0 {
-            return Ordering::Equal;
-        }
         if rules.contains(&(*a, *b)) {
             return Ordering::Less;
         }
@@ -74,11 +93,11 @@ fn sort_update(update: &mut [u8], rules: &HashSet<(u8, u8)>) {
         }
         Ordering::Equal
     });
-    update[UPDATE_MAX_SIZE] = update[update[UPDATE_MAX_SIZE + 1] as usize / 2];
+    update[UPDATE_MAX_SIZE] = update[update[UPDATE_MAX_SIZE] as usize / 2];
 }
 
 pub fn part2(input: &str) -> u16 {
-    let (rules, updates) = parse(input);
+    let (rules, updates) = parse_part2(input);
 
     updates.into_iter().fold(0, |acc, mut update| {
         if is_update_correct_order(&update, &rules) {
