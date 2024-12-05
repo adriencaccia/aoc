@@ -1,5 +1,5 @@
 const UPDATE_MAX_SIZE: usize = 23; // real size is 23, we store 2 extra values. 1 for the middle value and 1 for the size of the update
-const UPDATES_LEN: usize = 187;
+const UPDATES_LEN: usize = 220;
 const MAX_SIZE: usize = 100;
 type AdjMatrix = [[bool; MAX_SIZE]; MAX_SIZE];
 
