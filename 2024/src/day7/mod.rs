@@ -1,8 +1,12 @@
 use itertools::Itertools;
 
-const SIZE: usize = 15;
+const SIZE: usize = 12;
 
+#[inline(always)]
 fn is_solvable(total: u64, acc: u64, values: &[u64]) -> bool {
+    if acc > total {
+        return false;
+    }
     if values.len() == 1 {
         return acc + values[0] == total || acc * values[0] == total;
     }
@@ -27,18 +31,23 @@ pub fn part1(input: &str) -> u64 {
     })
 }
 
+#[inline(always)]
 fn is_solvable_2(total: u64, acc: u64, values: &[u64]) -> bool {
+    if acc > total {
+        return false;
+    }
     if values.len() == 1 {
         return acc + values[0] == total
             || acc * values[0] == total
-            || acc * 10_u64.pow(values[0].to_string().len() as u32) + values[0] == total;
+            || acc * 10_u64.pow((values[0] as f64).log10().floor() as u32 + 1) + values[0]
+                == total;
     }
 
     is_solvable_2(total, acc + values[0], &values[1..])
         || is_solvable_2(total, acc * values[0], &values[1..])
         || is_solvable_2(
             total,
-            acc * 10_u64.pow(values[0].to_string().len() as u32) + values[0],
+            acc * 10_u64.pow((values[0] as f64).log10().floor() as u32 + 1) + values[0],
             &values[1..],
         )
 }
