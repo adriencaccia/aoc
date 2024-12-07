@@ -1,7 +1,6 @@
 const GRID_SIZE: usize = 130;
-// const GRID_SIZE: usize = 10;
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 enum Direction {
     Up,
     Right,
@@ -10,6 +9,7 @@ enum Direction {
 }
 
 impl Direction {
+    #[inline(always)]
     fn turn(&self) -> Self {
         match self {
             Direction::Up => Direction::Right,
@@ -19,36 +19,19 @@ impl Direction {
         }
     }
 
+    #[inline(always)]
     fn advance(&self, pos: (usize, usize)) -> Option<(usize, usize)> {
         match self {
-            Direction::Up => {
-                if pos.0 == 0 {
-                    return None;
-                }
-                Some((pos.0 - 1, pos.1))
-            }
-            Direction::Right => {
-                if pos.1 == GRID_SIZE - 1 {
-                    return None;
-                }
-                Some((pos.0, pos.1 + 1))
-            }
-            Direction::Down => {
-                if pos.0 == GRID_SIZE - 1 {
-                    return None;
-                }
-                Some((pos.0 + 1, pos.1))
-            }
-            Direction::Left => {
-                if pos.1 == 0 {
-                    return None;
-                }
-                Some((pos.0, pos.1 - 1))
-            }
+            Direction::Up if pos.0 != 0 => Some((pos.0 - 1, pos.1)),
+            Direction::Right if pos.1 != GRID_SIZE - 1 => Some((pos.0, pos.1 + 1)),
+            Direction::Down if pos.0 != GRID_SIZE - 1 => Some((pos.0 + 1, pos.1)),
+            Direction::Left if pos.1 != 0 => Some((pos.0, pos.1 - 1)),
+            _ => None,
         }
     }
 
-    fn to_bit(&self) -> i32 {
+    #[inline(always)]
+    fn to_bit(self) -> i32 {
         match self {
             Direction::Up => UP,
             Direction::Right => RIGHT,
@@ -112,9 +95,6 @@ pub fn part1(input: &str) -> u16 {
 
 pub fn part2(input: &str) -> u16 {
     let mut grid = [[b'0'; GRID_SIZE]; GRID_SIZE];
-    // 000 -> not visited
-    // 010 -> visited vertically
-    // 100 -> visited horizontally
     let mut visits = [[NOT_VISITED; GRID_SIZE]; GRID_SIZE];
     let mut pos = (0, 0);
     input.lines().enumerate().for_each(|(i, line)| {
@@ -128,20 +108,17 @@ pub fn part2(input: &str) -> u16 {
     });
 
     let mut sum = 0;
-    let mut new_visits = visits;
-    let mut path: Vec<((usize, usize), Direction)> = Vec::with_capacity(5_000);
+    let mut path = Vec::with_capacity(5_000);
     path.push((pos, Direction::Up));
-    visit_grid(&mut path, grid, visits);
-    new_visits[path[0].0 .0][path[0].0 .1] |= UP;
-    new_visits[path[1].0 .0][path[1].0 .1] |= UP;
+    visit_grid(&mut path, &grid, visits);
     for i in 2..path.len() {
         let (pos, dir) = &path[i];
         // add an obstacle on the way, only if it is not in the previous path
-        if new_visits[pos.0][pos.1] != 0 {
+        if visits[pos.0][pos.1] != 0 {
             continue;
         }
 
-        new_visits[pos.0][pos.1] |= dir.to_bit();
+        visits[pos.0][pos.1] |= dir.to_bit();
         let mut new_grid = grid;
         new_grid[pos.0][pos.1] = b'#';
 
@@ -150,7 +127,7 @@ pub fn part2(input: &str) -> u16 {
         let mut sub_path = sub_path.to_vec();
         sub_path.push((path[i - 1].0, dir.turn()));
 
-        let is_cycle = visit_grid(&mut sub_path, new_grid, new_visits);
+        let is_cycle = visit_grid(&mut sub_path, &new_grid, visits);
         if is_cycle {
             sum += 1;
         }
@@ -160,11 +137,10 @@ pub fn part2(input: &str) -> u16 {
 
 fn visit_grid(
     path: &mut Vec<((usize, usize), Direction)>,
-    grid: [[u8; GRID_SIZE]; GRID_SIZE],
+    grid: &[[u8; GRID_SIZE]; GRID_SIZE],
     mut visits: [[i32; GRID_SIZE]; GRID_SIZE],
 ) -> bool {
-    let (mut pos, dir) = path.last().unwrap();
-    let mut dir = dir.clone();
+    let (mut pos, mut dir) = path.last().unwrap();
     let mut previous_pos = pos;
     loop {
         match grid[pos.0][pos.1] {
@@ -188,7 +164,7 @@ fn visit_grid(
             if (visits[pos.0][pos.1] & dir.to_bit()) != 0 {
                 return true;
             }
-            path.push((pos, dir.clone()));
+            path.push((pos, dir));
         } else {
             break;
         }
