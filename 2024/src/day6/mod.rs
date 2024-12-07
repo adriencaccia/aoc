@@ -31,7 +31,7 @@ impl Direction {
     }
 
     #[inline(always)]
-    fn to_bit(self) -> i32 {
+    fn to_bit(self) -> u8 {
         match self {
             Direction::Up => UP,
             Direction::Right => RIGHT,
@@ -41,11 +41,11 @@ impl Direction {
     }
 }
 
-const NOT_VISITED: i32 = 0;
-const UP: i32 = 1;
-const RIGHT: i32 = 1 << 2;
-const DOWN: i32 = 1 << 3;
-const LEFT: i32 = 1 << 4;
+const NOT_VISITED: u8 = 0;
+const UP: u8 = 1;
+const RIGHT: u8 = 1 << 2;
+const DOWN: u8 = 1 << 3;
+const LEFT: u8 = 1 << 4;
 
 // TODO: store more information in the grid using bitset operations
 
@@ -138,7 +138,7 @@ pub fn part2(input: &str) -> u16 {
 fn visit_grid(
     path: &mut Vec<((usize, usize), Direction)>,
     grid: &[[u8; GRID_SIZE]; GRID_SIZE],
-    mut visits: [[i32; GRID_SIZE]; GRID_SIZE],
+    mut visits: [[u8; GRID_SIZE]; GRID_SIZE],
 ) -> bool {
     let (mut pos, mut dir) = path.last().unwrap();
     let mut previous_pos = pos;
