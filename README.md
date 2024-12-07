@@ -2,6 +2,12 @@
 
 Welcome to my Advent of Code Solutions repository! This repository contains my solutions to the [Advent of Code](https://adventofcode.com/) puzzles, written in Rust and TypeScript.
 
+## Start a new day
+
+```bash
+node scripts/init.js rust
+```
+
 ## About the Project 📖
 
 Advent of Code is an annual event where every day from December 1st to 25th, a new coding puzzle is released. Each puzzle has two parts, and they get progressively more difficult as the event goes on.

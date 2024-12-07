@@ -1,44 +1,39 @@
-fn parse_input(input: &str) -> (u32, u32) {
-    let lines = input.trim().lines();
-
-    let part1 = 0;
-    let part2 = 0;
-    (part1, part2)
+pub fn part1(input: &str) -> u32 {
+    0
 }
 
-pub fn main() -> (u32, u32) {
-    let (part1, part2) = parse_input(include_str!("input.txt"));
-    println!("part1 {}", part1);
-    println!("part2 {}", part2);
-
-    (part1, part2)
+pub fn part2(input: &str) -> u32 {
+    0
 }
 
 #[cfg(test)]
 mod tests {
-    use indoc::indoc;
-
     use super::*;
+    use indoc::indoc;
 
     const EXAMPLE_INPUT: &str = indoc! {"
         REPLACE
         ME
         WITH THE EXAMPLE
-    "};
+"};
 
     #[test]
-    fn test_example() {
-        let (part1, part2) = parse_input(EXAMPLE_INPUT);
-
-        assert_eq!(part1, 0);
-        assert_eq!(part2, 0);
+    fn test_example_part1() {
+        assert_eq!(part1(EXAMPLE_INPUT), 0);
     }
 
     #[test]
-    fn test_main() {
-        let (part1, part2) = main();
+    fn test_part1() {
+        assert_eq!(part1(include_str!("input.txt")), 0);
+    }
 
-        assert_eq!(part1, 0);
-        assert_eq!(part2, 0);
+    #[test]
+    fn test_example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT), 0);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(include_str!("input.txt")), 0);
     }
 }

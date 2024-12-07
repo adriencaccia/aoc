@@ -17,7 +17,7 @@ if (["rust", "ts"].includes(year)) {
   day = now.getDate().toString();
 }
 
-const dayPath = `${year}/src/day${day.padStart(2, "0")}`;
+const dayPath = `${year}/src/day${day}`;
 
 console.log(
   `Creating file structure for year ${year} day ${day} in ${lang}...`
@@ -27,5 +27,5 @@ shelljs.cp("-r", `template/${lang}/*`, dayPath);
 
 execSync(
   `aoc download --year ${year} --day ${day} --overwrite \
-      --input-file=${dayPath}/input.txt --puzzle-file=${dayPath}/example.txt -q`
+      --input-only --input-file=${dayPath}/input.txt`
 );
