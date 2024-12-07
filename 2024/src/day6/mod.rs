@@ -1,6 +1,6 @@
 const GRID_SIZE: usize = 130;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 enum Direction {
     Up,
     Right,
@@ -31,7 +31,7 @@ impl Direction {
     }
 
     #[inline(always)]
-    fn to_bit(self) -> u8 {
+    fn to_bit(&self) -> u8 {
         match self {
             Direction::Up => UP,
             Direction::Right => RIGHT,
@@ -108,7 +108,7 @@ pub fn part2(input: &str) -> u16 {
     });
 
     let mut sum = 0;
-    let mut path = Vec::with_capacity(5_000);
+    let mut path: Vec<((usize, usize), Direction)> = Vec::with_capacity(5_000);
     path.push((pos, Direction::Up));
     visit_grid(&mut path, &grid, visits);
     for i in 2..path.len() {
@@ -140,7 +140,8 @@ fn visit_grid(
     grid: &[[u8; GRID_SIZE]; GRID_SIZE],
     mut visits: [[u8; GRID_SIZE]; GRID_SIZE],
 ) -> bool {
-    let (mut pos, mut dir) = path.last().unwrap();
+    let (mut pos, dir) = path.last().unwrap();
+    let mut dir = dir.clone();
     let mut previous_pos = pos;
     loop {
         match grid[pos.0][pos.1] {
@@ -164,7 +165,7 @@ fn visit_grid(
             if (visits[pos.0][pos.1] & dir.to_bit()) != 0 {
                 return true;
             }
-            path.push((pos, dir));
+            path.push((pos, dir.clone()));
         } else {
             break;
         }
