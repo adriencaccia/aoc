@@ -37,7 +37,7 @@ fn parse_input(input: &str) -> (u32, usize) {
 
     let counts: (Vec<u32>, Vec<usize>) = galaxies
         .iter()
-        .tuple_combinations::<(_, _)>()
+        .tuple_combinations()
         .filter_map(|(&(x1, y1), &(x2, y2))| {
             if x1 == x2 && y1 == y2 {
                 return None;
