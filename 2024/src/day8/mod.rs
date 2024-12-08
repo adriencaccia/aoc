@@ -64,13 +64,8 @@ fn try_add_antenna(
         let i = antenna.0 as usize;
         let j = antenna.1 as usize;
         match grid[i][j] {
-            b'.' => {
-                *new_antennas += 1;
-                grid[i][j] = b'#';
-                a_nodes[i][j] = true;
-            }
             // empty check is just for example
-            b' ' | b'#' => {}
+            b' ' => {}
             _ if !a_nodes[i][j] => {
                 *new_antennas += 1;
                 a_nodes[i][j] = true;
