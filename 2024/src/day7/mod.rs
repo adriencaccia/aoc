@@ -8,9 +8,9 @@ const SIZE: usize = 12;
 fn is_solvable(target: u64, values: &[u64]) -> bool {
     let len = values.len();
     if len == 1 {
-        return target == values[0];
+        return target == unsafe { *values.get_unchecked(0) };
     }
-    let last = values[len - 1];
+    let last = unsafe { *values.get_unchecked(len - 1) };
     if target % last == 0 && is_solvable(target / last, &values[..(len - 1)]) {
         return true;
     }
@@ -41,9 +41,9 @@ pub fn part1(input: &str) -> u64 {
 fn is_solvable_2(target: u64, values: &[u64]) -> bool {
     let len = values.len();
     if len == 1 {
-        return target == values[0];
+        return target == unsafe { *values.get_unchecked(0) };
     }
-    let last = values[len - 1];
+    let last = unsafe { *values.get_unchecked(len - 1) };
     if target % last == 0 && is_solvable_2(target / last, &values[..(len - 1)]) {
         return true;
     }
