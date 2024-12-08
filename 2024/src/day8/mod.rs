@@ -1,105 +1,129 @@
-use std::collections::HashMap;
-
-use itertools::Itertools;
-
 const GRID_SIZE: usize = 50;
-const CHARS_LENGTH: usize = 26 + 26 + 10; // 26 lowercase, 26 uppercase, 10 digits
-const CHAR_OCC: usize = 4; // each antenna has at most 4 occurrences
+const ASCII_RANGE: usize = 128;
+const POS_SIZE: usize = 4; // each antenna has at most 4 occurrences
 
-type CharPositions = HashMap<u8, Vec<(usize, usize)>>;
+#[derive(Copy, Clone)]
+struct CharInfo {
+    positions: [(usize, usize); POS_SIZE],
+    count: u8,
+}
 
-fn parse(input: &str) -> (CharPositions, usize) {
-    let mut chars = CharPositions::with_capacity(CHARS_LENGTH);
+impl Default for CharInfo {
+    #[inline(always)]
+    fn default() -> Self {
+        Self {
+            positions: [(0, 0); POS_SIZE],
+            count: 0,
+        }
+    }
+}
+
+type CharData = [CharInfo; ASCII_RANGE];
+
+#[inline(always)]
+fn parse(input: &str) -> (CharData, usize) {
+    let mut char_data: CharData = [CharInfo::default(); ASCII_RANGE];
     let mut size = 0;
-    input.lines().enumerate().for_each(|(i, line)| {
-        line.bytes().enumerate().for_each(|(j, c)| {
+
+    for (i, line) in input
+        .as_bytes()
+        .split(|&b| b == b'\n')
+        .filter(|l| !l.is_empty())
+        .enumerate()
+    {
+        for (j, &c) in line.iter().enumerate() {
             if c != b'.' {
-                chars
-                    .entry(c)
-                    .or_insert_with(|| Vec::with_capacity(CHAR_OCC))
-                    .push_within_capacity((i, j))
-                    .unwrap();
+                let info = &mut char_data[c as usize];
+                if info.count < POS_SIZE as u8 {
+                    info.positions[info.count as usize] = (i, j);
+                    info.count += 1;
+                }
             }
-        });
-        size += 1;
-    });
-    (chars, size)
+        }
+        size = i + 1;
+    }
+
+    (char_data, size)
 }
 
 pub fn part1(input: &str) -> u32 {
-    let (chars, size) = parse(input);
+    let (char_data, size) = parse(input);
     let mut a_nodes = [[false; GRID_SIZE]; GRID_SIZE];
+    let mut total = 0;
 
-    chars.into_iter().fold(0, |sum, (_, p)| {
-        let mut new_antennas = 0;
-        p.iter()
-            .tuple_combinations()
-            .for_each(|((a, b), (c, d))| unsafe {
-                let i_diff = (*a as isize) - (*c as isize);
-                let j_diff = (*b as isize) - (*d as isize);
-                let i = (*a as isize) - 2 * i_diff;
-                let j = (*b as isize) - 2 * j_diff;
+    for char_info in char_data.iter() {
+        for i in 0..char_info.count as usize {
+            for j in (i + 1)..char_info.count as usize {
+                let (a, b) = char_info.positions[i];
+                let (c, d) = char_info.positions[j];
+                let i_diff = (a as isize) - (c as isize);
+                let j_diff = (b as isize) - (d as isize);
+                let i = (a as isize) - 2 * i_diff;
+                let j = (b as isize) - 2 * j_diff;
                 if i >= 0
                     && i < size as isize
                     && j >= 0
                     && j < size as isize
-                    && !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize)
+                    && unsafe { !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize) }
                 {
-                    new_antennas += 1;
+                    total += 1;
                     a_nodes[i as usize][j as usize] = true;
                 }
-                let i = (*c as isize) + 2 * i_diff;
-                let j = (*d as isize) + 2 * j_diff;
+                let i = (c as isize) + 2 * i_diff;
+                let j = (d as isize) + 2 * j_diff;
                 if i >= 0
                     && i < size as isize
                     && j >= 0
                     && j < size as isize
-                    && !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize)
+                    && unsafe { !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize) }
                 {
-                    new_antennas += 1;
+                    total += 1;
                     a_nodes[i as usize][j as usize] = true;
                 }
-            });
+            }
+        }
+    }
 
-        sum + new_antennas
-    })
+    total
 }
 
 pub fn part2(input: &str) -> u32 {
-    let (chars, size) = parse(input);
+    let (char_data, size) = parse(input);
     let mut a_nodes = [[false; GRID_SIZE]; GRID_SIZE];
+    let mut total = 0;
 
-    chars.into_iter().fold(0, |sum, (_, p)| {
-        let mut new_antennas = 0;
-        p.iter()
-            .tuple_combinations()
-            .for_each(|((a, b), (c, d))| unsafe {
-                let i_diff = (*a as isize) - (*c as isize);
-                let j_diff = (*b as isize) - (*d as isize);
-                let mut i = *a as isize;
-                let mut j = *b as isize;
+    for char_info in char_data.iter() {
+        for i in 0..char_info.count as usize {
+            for j in (i + 1)..char_info.count as usize {
+                let (a, b) = char_info.positions[i];
+                let (c, d) = char_info.positions[j];
+                let i_diff = (a as isize) - (c as isize);
+                let j_diff = (b as isize) - (d as isize);
+                let mut i = a as isize;
+                let mut j = b as isize;
                 while i >= 0 && i < size as isize && j >= 0 && j < size as isize {
-                    if !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize) {
-                        new_antennas += 1;
+                    if unsafe { !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize) } {
+                        total += 1;
                         a_nodes[i as usize][j as usize] = true;
                     }
                     i -= i_diff;
                     j -= j_diff;
                 }
-                let mut i = *c as isize;
-                let mut j = *d as isize;
+                let mut i = c as isize;
+                let mut j = d as isize;
                 while i >= 0 && i < size as isize && j >= 0 && j < size as isize {
-                    if !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize) {
-                        new_antennas += 1;
+                    if unsafe { !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize) } {
+                        total += 1;
                         a_nodes[i as usize][j as usize] = true;
                     }
                     i += i_diff;
                     j += j_diff;
                 }
-            });
+            }
+        }
+    }
 
-        sum + new_antennas
-    })
+    total
 }
 
 #[cfg(test)]
