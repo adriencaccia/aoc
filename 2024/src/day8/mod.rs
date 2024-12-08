@@ -11,19 +11,23 @@ type CharPositions = HashMap<u8, Vec<(usize, usize)>>;
 fn parse(input: &str) -> (CharPositions, usize) {
     let mut chars = CharPositions::with_capacity(CHARS_LENGTH);
     let mut size = 0;
-    input.lines().enumerate().for_each(|(i, line)| {
-        line.bytes().enumerate().for_each(|(j, c)| {
-            if c == b'.' {
-                return;
-            }
-            chars
-                .entry(c)
-                .or_insert_with(|| Vec::with_capacity(CHAR_OCC))
-                .push_within_capacity((i, j))
-                .unwrap();
+    input
+        .as_bytes()
+        .split(|&b| b == b'\n')
+        .filter(|line| !line.is_empty())
+        .enumerate()
+        .for_each(|(i, line)| {
+            line.iter().enumerate().for_each(|(j, &c)| {
+                if c != b'.' {
+                    chars
+                        .entry(c)
+                        .or_insert_with(|| Vec::with_capacity(CHAR_OCC))
+                        .push_within_capacity((i, j))
+                        .unwrap();
+                }
+            });
+            size += 1;
         });
-        size += 1;
-    });
     (chars, size)
 }
 
