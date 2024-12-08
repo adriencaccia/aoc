@@ -37,6 +37,25 @@ pub fn part1(input: &str) -> u64 {
     })
 }
 
+/// in the inputs, the concatenated values have 3 digits max
+#[inline(always)]
+fn get_num_digits(v: u64) -> u32 {
+    match v {
+        _ if v >= 100 => 3,
+        _ if v >= 10 => 2,
+        _ => 1,
+    }
+}
+
+/*
+/// slower than `get_num_digits` as it performs checks and actually calculate
+/// the correct value, but works on all `u64`
+#[inline(always)]
+fn get_num_digits_slow(v: u64) -> u32 {
+    v.checked_ilog10().unwrap() + 1
+}
+*/
+
 #[inline(always)]
 fn is_solvable_2(target: u64, values: &[u64]) -> bool {
     let len = values.len();
@@ -50,7 +69,7 @@ fn is_solvable_2(target: u64, values: &[u64]) -> bool {
     if target > last && is_solvable_2(target - last, &values[..(len - 1)]) {
         return true;
     }
-    let last_length = 10_u64.pow((last as f64).log10().floor() as u32 + 1);
+    let last_length = 10u64.pow(get_num_digits(last));
     if target % last_length == last && is_solvable_2(target / last_length, &values[..(len - 1)]) {
         return true;
     }
