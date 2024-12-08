@@ -2,17 +2,23 @@ use itertools::Itertools;
 
 const SIZE: usize = 12;
 
+/// Check if target can be obtained by looking at the last value of `values`,
+/// to trim the possible solutions more efficiently
 #[inline(always)]
-fn is_solvable(total: u64, acc: u64, values: &[u64]) -> bool {
-    if acc > total {
-        return false;
+fn is_solvable(target: u64, values: &[u64]) -> bool {
+    let len = values.len();
+    if len == 1 {
+        return target == values[0];
     }
-    if values.len() == 1 {
-        return acc + values[0] == total || acc * values[0] == total;
+    let last = values[len - 1];
+    if target % last == 0 && is_solvable(target / last, &values[..(len - 1)]) {
+        return true;
+    }
+    if target > last && is_solvable(target - last, &values[..(len - 1)]) {
+        return true;
     }
 
-    is_solvable(total, acc + values[0], &values[1..])
-        || is_solvable(total, acc * values[0], &values[1..])
+    false
 }
 
 pub fn part1(input: &str) -> u64 {
@@ -24,7 +30,7 @@ pub fn part1(input: &str) -> u64 {
             .split_whitespace()
             .for_each(|v| values.push(v.parse().unwrap()));
 
-        if is_solvable(total, values[0], &values[1..]) {
+        if is_solvable(total, &values) {
             return sum + total;
         }
         sum
@@ -32,24 +38,24 @@ pub fn part1(input: &str) -> u64 {
 }
 
 #[inline(always)]
-fn is_solvable_2(total: u64, acc: u64, values: &[u64]) -> bool {
-    if acc > total {
-        return false;
+fn is_solvable_2(target: u64, values: &[u64]) -> bool {
+    let len = values.len();
+    if len == 1 {
+        return target == values[0];
     }
-    if values.len() == 1 {
-        return acc + values[0] == total
-            || acc * values[0] == total
-            || acc * 10_u64.pow((values[0] as f64).log10().floor() as u32 + 1) + values[0]
-                == total;
+    let last = values[len - 1];
+    if target % last == 0 && is_solvable_2(target / last, &values[..(len - 1)]) {
+        return true;
+    }
+    if target > last && is_solvable_2(target - last, &values[..(len - 1)]) {
+        return true;
+    }
+    let last_length = 10_u64.pow((last as f64).log10().floor() as u32 + 1);
+    if target % last_length == last && is_solvable_2(target / last_length, &values[..(len - 1)]) {
+        return true;
     }
 
-    is_solvable_2(total, acc + values[0], &values[1..])
-        || is_solvable_2(total, acc * values[0], &values[1..])
-        || is_solvable_2(
-            total,
-            acc * 10_u64.pow((values[0] as f64).log10().floor() as u32 + 1) + values[0],
-            &values[1..],
-        )
+    false
 }
 
 pub fn part2(input: &str) -> u64 {
@@ -61,7 +67,7 @@ pub fn part2(input: &str) -> u64 {
             .split_whitespace()
             .for_each(|v| values.push(v.parse().unwrap()));
 
-        if is_solvable_2(total, values[0], &values[1..]) {
+        if is_solvable_2(total, &values) {
             return sum + total;
         }
         sum
