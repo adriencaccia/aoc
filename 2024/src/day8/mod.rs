@@ -35,33 +35,32 @@ pub fn part1(input: &str) -> u32 {
         p.iter().tuple_combinations().for_each(|((a, b), (c, d))| {
             let i_diff = (*a as isize) - (*c as isize);
             let j_diff = (*b as isize) - (*d as isize);
-            let a_1 = ((*a as isize) - 2 * i_diff, (*b as isize) - 2 * j_diff);
-            let a_2 = ((*c as isize) + 2 * i_diff, (*d as isize) + 2 * j_diff);
-
-            try_add_antenna(a_1, &mut new_antennas, &mut a_nodes, size);
-            try_add_antenna(a_2, &mut new_antennas, &mut a_nodes, size);
+            let i = (*a as isize) - 2 * i_diff;
+            let j = (*b as isize) - 2 * j_diff;
+            if i >= 0
+                && i < size as isize
+                && j >= 0
+                && j < size as isize
+                && !a_nodes[i as usize][j as usize]
+            {
+                new_antennas += 1;
+                a_nodes[i as usize][j as usize] = true;
+            }
+            let i = (*c as isize) + 2 * i_diff;
+            let j = (*d as isize) + 2 * j_diff;
+            if i >= 0
+                && i < size as isize
+                && j >= 0
+                && j < size as isize
+                && !a_nodes[i as usize][j as usize]
+            {
+                new_antennas += 1;
+                a_nodes[i as usize][j as usize] = true;
+            }
         });
 
         sum + new_antennas
     })
-}
-
-#[inline(always)]
-fn try_add_antenna(
-    antenna: (isize, isize),
-    new_antennas: &mut u32,
-    a_nodes: &mut [[bool; 50]; 50],
-    size: usize,
-) {
-    if antenna.0 >= 0
-        && (antenna.0 as usize) < size
-        && antenna.1 >= 0
-        && (antenna.1 as usize) < size
-        && !a_nodes[antenna.0 as usize][antenna.1 as usize]
-    {
-        *new_antennas += 1;
-        a_nodes[antenna.0 as usize][antenna.1 as usize] = true;
-    }
 }
 
 pub fn part2(input: &str) -> u32 {
@@ -73,11 +72,25 @@ pub fn part2(input: &str) -> u32 {
         p.iter().tuple_combinations().for_each(|((a, b), (c, d))| {
             let i_diff = (*a as isize) - (*c as isize);
             let j_diff = (*b as isize) - (*d as isize);
-            for x in 0..30 {
-                let a_1 = ((*a as isize) - x * i_diff, (*b as isize) - x * j_diff);
-                let a_2 = ((*c as isize) + x * i_diff, (*d as isize) + x * j_diff);
-                try_add_antenna(a_1, &mut new_antennas, &mut a_nodes, size);
-                try_add_antenna(a_2, &mut new_antennas, &mut a_nodes, size);
+            let mut i = *a as isize;
+            let mut j = *b as isize;
+            while i >= 0 && i < size as isize && j >= 0 && j < size as isize {
+                if !a_nodes[i as usize][j as usize] {
+                    new_antennas += 1;
+                    a_nodes[i as usize][j as usize] = true;
+                }
+                i -= i_diff;
+                j -= j_diff;
+            }
+            let mut i = *c as isize;
+            let mut j = *d as isize;
+            while i >= 0 && i < size as isize && j >= 0 && j < size as isize {
+                if !a_nodes[i as usize][j as usize] {
+                    new_antennas += 1;
+                    a_nodes[i as usize][j as usize] = true;
+                }
+                i += i_diff;
+                j += j_diff;
             }
         });
 
