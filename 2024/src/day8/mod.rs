@@ -32,32 +32,34 @@ pub fn part1(input: &str) -> u32 {
 
     chars.into_iter().fold(0, |sum, (_, p)| {
         let mut new_antennas = 0;
-        p.iter().tuple_combinations().for_each(|((a, b), (c, d))| {
-            let i_diff = (*a as isize) - (*c as isize);
-            let j_diff = (*b as isize) - (*d as isize);
-            let i = (*a as isize) - 2 * i_diff;
-            let j = (*b as isize) - 2 * j_diff;
-            if i >= 0
-                && i < size as isize
-                && j >= 0
-                && j < size as isize
-                && !a_nodes[i as usize][j as usize]
-            {
-                new_antennas += 1;
-                a_nodes[i as usize][j as usize] = true;
-            }
-            let i = (*c as isize) + 2 * i_diff;
-            let j = (*d as isize) + 2 * j_diff;
-            if i >= 0
-                && i < size as isize
-                && j >= 0
-                && j < size as isize
-                && !a_nodes[i as usize][j as usize]
-            {
-                new_antennas += 1;
-                a_nodes[i as usize][j as usize] = true;
-            }
-        });
+        p.iter()
+            .tuple_combinations()
+            .for_each(|((a, b), (c, d))| unsafe {
+                let i_diff = (*a as isize) - (*c as isize);
+                let j_diff = (*b as isize) - (*d as isize);
+                let i = (*a as isize) - 2 * i_diff;
+                let j = (*b as isize) - 2 * j_diff;
+                if i >= 0
+                    && i < size as isize
+                    && j >= 0
+                    && j < size as isize
+                    && !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize)
+                {
+                    new_antennas += 1;
+                    a_nodes[i as usize][j as usize] = true;
+                }
+                let i = (*c as isize) + 2 * i_diff;
+                let j = (*d as isize) + 2 * j_diff;
+                if i >= 0
+                    && i < size as isize
+                    && j >= 0
+                    && j < size as isize
+                    && !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize)
+                {
+                    new_antennas += 1;
+                    a_nodes[i as usize][j as usize] = true;
+                }
+            });
 
         sum + new_antennas
     })
@@ -69,30 +71,32 @@ pub fn part2(input: &str) -> u32 {
 
     chars.into_iter().fold(0, |sum, (_, p)| {
         let mut new_antennas = 0;
-        p.iter().tuple_combinations().for_each(|((a, b), (c, d))| {
-            let i_diff = (*a as isize) - (*c as isize);
-            let j_diff = (*b as isize) - (*d as isize);
-            let mut i = *a as isize;
-            let mut j = *b as isize;
-            while i >= 0 && i < size as isize && j >= 0 && j < size as isize {
-                if !a_nodes[i as usize][j as usize] {
-                    new_antennas += 1;
-                    a_nodes[i as usize][j as usize] = true;
+        p.iter()
+            .tuple_combinations()
+            .for_each(|((a, b), (c, d))| unsafe {
+                let i_diff = (*a as isize) - (*c as isize);
+                let j_diff = (*b as isize) - (*d as isize);
+                let mut i = *a as isize;
+                let mut j = *b as isize;
+                while i >= 0 && i < size as isize && j >= 0 && j < size as isize {
+                    if !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize) {
+                        new_antennas += 1;
+                        a_nodes[i as usize][j as usize] = true;
+                    }
+                    i -= i_diff;
+                    j -= j_diff;
                 }
-                i -= i_diff;
-                j -= j_diff;
-            }
-            let mut i = *c as isize;
-            let mut j = *d as isize;
-            while i >= 0 && i < size as isize && j >= 0 && j < size as isize {
-                if !a_nodes[i as usize][j as usize] {
-                    new_antennas += 1;
-                    a_nodes[i as usize][j as usize] = true;
+                let mut i = *c as isize;
+                let mut j = *d as isize;
+                while i >= 0 && i < size as isize && j >= 0 && j < size as isize {
+                    if !a_nodes.get_unchecked(i as usize).get_unchecked(j as usize) {
+                        new_antennas += 1;
+                        a_nodes[i as usize][j as usize] = true;
+                    }
+                    i += i_diff;
+                    j += j_diff;
                 }
-                i += i_diff;
-                j += j_diff;
-            }
-        });
+            });
 
         sum + new_antennas
     })
