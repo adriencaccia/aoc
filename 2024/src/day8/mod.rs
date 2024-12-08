@@ -31,30 +31,39 @@ fn parse(input: &str) -> (CharPositions, usize) {
     (chars, size)
 }
 
+type BitGrid = [u64; (GRID_SIZE * GRID_SIZE + 63) / 64];
+
 #[inline(always)]
-fn try_add_antenna(
+fn set_bit(grid: &mut BitGrid, i: usize, j: usize) -> bool {
+    let idx = i * GRID_SIZE + j;
+    let word_idx = idx >> 6;
+    let bit_idx = idx & 63;
+    let old = grid[word_idx];
+    grid[word_idx] |= 1u64 << bit_idx;
+    old & (1u64 << bit_idx) == 0
+}
+
+#[inline(always)]
+fn process_antenna(
     size: usize,
-    antenna: (isize, isize),
+    ai: isize,
+    aj: isize,
     new_antennas: &mut u32,
-    a_nodes: &mut [[bool; 50]; 50],
+    a_nodes: &mut BitGrid,
 ) {
-    if antenna.0 >= 0
-        && (antenna.0 as usize) < size
-        && antenna.1 >= 0
-        && (antenna.1 as usize) < size
+    if ai >= 0
+        && (ai as usize) < size
+        && aj >= 0
+        && (aj as usize) < size
+        && set_bit(a_nodes, ai as usize, aj as usize)
     {
-        let i = antenna.0 as usize;
-        let j = antenna.1 as usize;
-        if !a_nodes[i][j] {
-            *new_antennas += 1;
-            a_nodes[i][j] = true;
-        }
+        *new_antennas += 1;
     }
 }
 
 pub fn part1(input: &str) -> u32 {
     let (chars, size) = parse(input);
-    let mut a_nodes = [[false; GRID_SIZE]; GRID_SIZE];
+    let mut a_nodes = [0u64; (GRID_SIZE * GRID_SIZE + 63) / 64];
 
     chars.into_iter().fold(0, |sum, (_, p)| {
         let mut new_antennas = 0;
@@ -64,19 +73,17 @@ pub fn part1(input: &str) -> u32 {
             let a_1 = ((*a as isize) - 2 * i_diff, (*b as isize) - 2 * j_diff);
             let a_2 = ((*c as isize) + 2 * i_diff, (*d as isize) + 2 * j_diff);
 
-            try_add_antenna(size, a_1, &mut new_antennas, &mut a_nodes);
-            try_add_antenna(size, a_2, &mut new_antennas, &mut a_nodes);
+            process_antenna(size, a_1.0, a_1.1, &mut new_antennas, &mut a_nodes);
+            process_antenna(size, a_2.0, a_2.1, &mut new_antennas, &mut a_nodes);
         });
 
         sum + new_antennas
     })
 }
 
-// ByteMap ???
-// bitset grid to store a_nodes aswell, no duplicate
 pub fn part2(input: &str) -> u32 {
     let (chars, size) = parse(input);
-    let mut a_nodes = [[false; GRID_SIZE]; GRID_SIZE];
+    let mut a_nodes = [0u64; (GRID_SIZE * GRID_SIZE + 63) / 64];
 
     chars.into_iter().fold(0, |sum, (_, p)| {
         let mut new_antennas = 0;
@@ -86,8 +93,9 @@ pub fn part2(input: &str) -> u32 {
             for x in 0..40 {
                 let a_1 = ((*a as isize) - x * i_diff, (*b as isize) - x * j_diff);
                 let a_2 = ((*c as isize) + x * i_diff, (*d as isize) + x * j_diff);
-                try_add_antenna(size, a_1, &mut new_antennas, &mut a_nodes);
-                try_add_antenna(size, a_2, &mut new_antennas, &mut a_nodes);
+
+                process_antenna(size, a_1.0, a_1.1, &mut new_antennas, &mut a_nodes);
+                process_antenna(size, a_2.0, a_2.1, &mut new_antennas, &mut a_nodes);
             }
         });
 
