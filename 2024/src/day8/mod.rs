@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use itertools::Itertools;
 
 const GRID_SIZE: usize = 50;
-const CHARS_LENGTH: usize = 53;
+const CHARS_LENGTH: usize = 26 + 26 + 10; // 26 lowercase, 26 uppercase, 10 digits
 const CHAR_OCC: usize = 4; // each antenna has at most 4 occurrences
 
 type CharPositions = HashMap<u8, Vec<(usize, usize)>>;
