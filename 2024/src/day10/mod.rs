@@ -1,4 +1,4 @@
-const SIZE: usize = 53;
+const SIZE: usize = 65;
 const ZEROS_SIZE: usize = 1000;
 
 fn parse(input: &str) -> ([[u8; SIZE]; SIZE], Vec<(usize, usize)>) {
