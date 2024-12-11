@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 const SIZE: usize = 53;
 const ZEROS_SIZE: usize = 1000;
 
@@ -61,29 +63,44 @@ pub fn part1(input: &str) -> u16 {
 }
 
 fn find_trailhead_rating(grid: &[[u8; SIZE]; SIZE], (i, j): (usize, usize)) -> u16 {
-    let mut stack = Vec::with_capacity(SIZE * SIZE);
+    let mut stack = VecDeque::with_capacity(SIZE * SIZE);
+    let mut visits = [[0; SIZE]; SIZE];
     let mut rating = 0;
-    stack.push((i, j));
-    while let Some((i, j)) = stack.pop() {
+    stack.push_back((i, j));
+    visits[i][j] = 1;
+    while let Some((i, j)) = stack.pop_front() {
         let elevation = grid[i][j];
         // only for example input
         if elevation == b'.' {
             continue;
         }
         if elevation == b'9' {
-            rating += 1;
+            rating += visits[i][j];
+            continue;
         }
         if i > 0 && grid[i - 1][j] == elevation + 1 {
-            stack.push((i - 1, j));
+            if visits[i - 1][j] == 0 {
+                stack.push_back((i - 1, j));
+            }
+            visits[i - 1][j] += visits[i][j];
         }
         if i < SIZE - 1 && grid[i + 1][j] == elevation + 1 {
-            stack.push((i + 1, j));
+            if visits[i + 1][j] == 0 {
+                stack.push_back((i + 1, j));
+            }
+            visits[i + 1][j] += visits[i][j];
         }
         if j > 0 && grid[i][j - 1] == elevation + 1 {
-            stack.push((i, j - 1));
+            if visits[i][j - 1] == 0 {
+                stack.push_back((i, j - 1));
+            }
+            visits[i][j - 1] += visits[i][j];
         }
         if j < SIZE - 1 && grid[i][j + 1] == elevation + 1 {
-            stack.push((i, j + 1));
+            if visits[i][j + 1] == 0 {
+                stack.push_back((i, j + 1));
+            }
+            visits[i][j + 1] += visits[i][j];
         }
     }
 
