@@ -7,7 +7,7 @@ pub fn part1(input: &str) -> u32 {
         .lines()
         .map(|l| {
             let (a, b): (u32, u32) = l
-                .split_whitespace()
+                .split_ascii_whitespace()
                 .map(|i| i.parse().unwrap())
                 .collect_tuple()
                 .unwrap();
@@ -31,7 +31,7 @@ pub fn part2(input: &str) -> u32 {
 
     input.trim().lines().for_each(|l| {
         let (a, b): (u32, u32) = l
-            .split_whitespace()
+            .split_ascii_whitespace()
             .map(|i| i.parse().unwrap())
             .collect_tuple()
             .unwrap();

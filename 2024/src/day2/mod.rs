@@ -18,7 +18,7 @@ const MAX_DIFF: u32 = 3;
 
 fn is_line_safe(line: &str) -> bool {
     let mut trend: Option<Trend> = None;
-    line.split_whitespace()
+    line.split_ascii_whitespace()
         .map(|v| v.parse::<u32>().unwrap())
         .tuple_windows()
         .all(|(a, b)| {
@@ -56,10 +56,10 @@ pub fn part2(input: &str) -> u32 {
         .fold(0, |sum, l| match is_line_safe(l) {
             true => sum + 1,
             false => {
-                let l_length = l.split_whitespace().collect_vec().len();
+                let l_length = l.split_ascii_whitespace().collect_vec().len();
 
                 match (0..l_length).any(|v| {
-                    let mut new_line = l.split_whitespace().collect_vec();
+                    let mut new_line = l.split_ascii_whitespace().collect_vec();
                     new_line.remove(v);
                     is_line_safe(&new_line.join(" "))
                 }) {

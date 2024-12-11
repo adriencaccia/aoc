@@ -20,7 +20,7 @@ fn parse_input(input: &str) -> (u32, u32) {
             line.split(':')
                 .last()
                 .unwrap()
-                .split_whitespace()
+                .split_ascii_whitespace()
                 .map(|n| n.parse().unwrap())
                 .collect_vec()
         })

@@ -10,7 +10,7 @@ fn parse_input(input: &str) -> (usize, usize) {
         .unwrap()
         .strip_prefix("seeds: ")
         .unwrap()
-        .split_whitespace()
+        .split_ascii_whitespace()
         .map(|seed| seed.parse().unwrap())
         .collect_vec();
 
@@ -23,7 +23,7 @@ fn parse_input(input: &str) -> (usize, usize) {
                 .unwrap()
                 .iter()
                 .map(|line| {
-                    line.split_whitespace()
+                    line.split_ascii_whitespace()
                         .map(|n| n.parse().unwrap())
                         .collect_tuple()
                         .unwrap()

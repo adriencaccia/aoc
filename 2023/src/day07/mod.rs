@@ -46,7 +46,7 @@ struct Hand {
 
 impl Hand {
     pub fn from_line(line: &str, joker: bool) -> Self {
-        let (cards_str, bid_str) = line.split_whitespace().collect_tuple().unwrap();
+        let (cards_str, bid_str) = line.split_ascii_whitespace().collect_tuple().unwrap();
         let mut card_counter: HashMap<char, u8> = HashMap::new();
         for char in cards_str.chars() {
             card_counter

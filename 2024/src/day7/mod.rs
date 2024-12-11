@@ -27,7 +27,7 @@ pub fn part1(input: &str) -> u64 {
         let total: u64 = total.parse().unwrap();
         let mut values: Vec<u64> = Vec::with_capacity(SIZE);
         values_str
-            .split_whitespace()
+            .split_ascii_whitespace()
             .for_each(|v| values.push(v.parse().unwrap()));
 
         if is_solvable(total, &values) {
@@ -83,7 +83,7 @@ pub fn part2(input: &str) -> u64 {
         let total: u64 = total.parse().unwrap();
         let mut values: Vec<u64> = Vec::with_capacity(SIZE);
         values_str
-            .split_whitespace()
+            .split_ascii_whitespace()
             .for_each(|v| values.push(v.parse().unwrap()));
 
         if is_solvable_2(total, &values) {

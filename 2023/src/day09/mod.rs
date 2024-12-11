@@ -28,7 +28,7 @@ fn parse_input(input: &str) -> (i32, i32) {
         .trim()
         .lines()
         .map(|line| {
-            line.split_whitespace()
+            line.split_ascii_whitespace()
                 .map(|n| n.parse().unwrap())
                 .collect_vec()
         })
