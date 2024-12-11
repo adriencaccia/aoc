@@ -16,6 +16,7 @@ gcd = "2.3.0"
 image = "0.24.7"
 rayon = "1.8.0"
 paste = "1.0.15"
+rustc-hash = { version = "2.1.0", features = ["nightly"] }
 
 [dev-dependencies]
 criterion = { version = "2.7.2", package = "codspeed-criterion-compat", default-features = false }

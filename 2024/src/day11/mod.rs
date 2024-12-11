@@ -1,11 +1,11 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 #[inline(always)]
 fn get_num_digits(v: u64) -> u64 {
     (v.checked_ilog10().unwrap() + 1) as u64
 }
 
-fn blink(cache: &mut HashMap<(u64, u64), u64>, v: u64, steps: u64) -> u64 {
+fn blink(cache: &mut FxHashMap<(u64, u64), u64>, v: u64, steps: u64) -> u64 {
     if let Some(computed_value) = cache.get(&(v, steps)) {
         return *computed_value;
     }
@@ -31,7 +31,7 @@ fn blink(cache: &mut HashMap<(u64, u64), u64>, v: u64, steps: u64) -> u64 {
 }
 
 fn compute(input: &str, steps: u64) -> u64 {
-    let mut cache: HashMap<(u64, u64), u64> = HashMap::new();
+    let mut cache: FxHashMap<(u64, u64), u64> = FxHashMap::default();
 
     input.split_ascii_whitespace().fold(0, |acc, v| {
         let v: u64 = v.parse().unwrap();
