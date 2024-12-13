@@ -1,5 +1,3 @@
-use arrayvec::ArrayVec;
-
 struct Claw {
     ax: i64,
     ay: i64,
@@ -12,7 +10,7 @@ struct Claw {
 impl Claw {
     // Fast parser that assumes valid input format
     #[inline]
-    fn parse(s: &str) -> Claw {
+    fn parse(s: &str) -> Self {
         // Skip "Button A: X+" prefix (12 chars)
         let chars = s.as_bytes();
         let mut pos = 12;
@@ -93,16 +91,9 @@ impl Claw {
     }
 }
 
-const SIZE: usize = 320;
-
 fn inner(input: &str, offset: i64) -> i64 {
-    let claws: ArrayVec<Claw, SIZE> = input
-        .trim_ascii_end()
-        .split("\n\n")
-        .map(Claw::parse)
-        .collect();
-
-    claws.into_iter().fold(0, |acc, mut claw| {
+    input.trim_ascii_end().split("\n\n").fold(0, |acc, claw| {
+        let mut claw = Claw::parse(claw);
         claw.px += offset;
         claw.py += offset;
 
