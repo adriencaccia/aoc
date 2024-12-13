@@ -1,3 +1,5 @@
+use arrayvec::ArrayVec;
+
 const SIZE: usize = 140;
 
 pub fn part1(input: &str) -> u32 {
@@ -8,8 +10,8 @@ pub fn part1(input: &str) -> u32 {
         });
     });
     let mut visited = [[false; SIZE]; SIZE];
-
     let mut total = 0;
+    let mut stack = ArrayVec::<(usize, usize), { 3 * SIZE }>::new();
 
     for i in 0..SIZE {
         for j in 0..SIZE {
@@ -20,8 +22,7 @@ pub fn part1(input: &str) -> u32 {
             let c_char = grid[i][j];
             let mut perimeter = 0;
             let mut area = 0;
-
-            let mut stack = Vec::with_capacity(3 * SIZE); //TODO: refine the capacity
+            stack.clear();
             stack.push((i, j));
 
             while let Some((i, j)) = stack.pop() {
@@ -90,8 +91,8 @@ pub fn part2(input: &str) -> u32 {
         });
     });
     let mut visited = [[false; SIZE]; SIZE];
-
     let mut total = 0;
+    let mut stack = ArrayVec::<(usize, usize), { 3 * SIZE }>::new();
 
     for i in 0..SIZE {
         for j in 0..SIZE {
@@ -102,8 +103,7 @@ pub fn part2(input: &str) -> u32 {
             let c_char = grid[i][j];
             let mut corners = 0;
             let mut area = 0;
-
-            let mut stack = Vec::with_capacity(3 * SIZE); //TODO: refine the capacity
+            stack.clear();
             stack.push((i, j));
 
             while let Some((i, j)) = stack.pop() {
