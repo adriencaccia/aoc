@@ -1,11 +1,3 @@
-use parse_display::{Display, FromStr};
-
-#[derive(Display, FromStr, PartialEq, Eq, Hash, Debug, Clone)]
-#[display(
-    "Button A: X+{ax}, Y+{ay}
-Button B: X+{bx}, Y+{by}
-Prize: X={px}, Y={py}"
-)]
 struct Claw {
     ax: i64,
     ay: i64,
@@ -15,9 +7,93 @@ struct Claw {
     py: i64,
 }
 
+impl Claw {
+    // Fast parser that assumes valid input format
+    #[inline]
+    fn parse(s: &str) -> Self {
+        // Skip "Button A: X+" prefix (12 chars)
+        let chars = s.as_bytes();
+        let mut pos = 12;
+
+        // Parse ax
+        let mut ax = 0i64;
+        while chars[pos] != b',' {
+            ax = ax * 10 + (chars[pos] - b'0') as i64;
+            pos += 1;
+        }
+
+        // Skip ", Y+" (4 chars)
+        pos += 4;
+
+        // Parse ay
+        let mut ay = 0i64;
+        while chars[pos] != b'\n' {
+            ay = ay * 10 + (chars[pos] - b'0') as i64;
+            pos += 1;
+        }
+
+        // Skip "\nButton B: X+" (13 chars)
+        pos += 13;
+
+        // Parse bx
+        let mut bx = 0i64;
+        while chars[pos] != b',' {
+            bx = bx * 10 + (chars[pos] - b'0') as i64;
+            pos += 1;
+        }
+
+        // Skip ", Y+" (4 chars)
+        pos += 4;
+
+        // Parse by
+        let mut by = 0i64;
+        while chars[pos] != b'\n' {
+            by = by * 10 + (chars[pos] - b'0') as i64;
+            pos += 1;
+        }
+
+        // Skip "\nPrize: X=" (10 chars)
+        pos += 10;
+
+        // Parse px
+        let mut px = 0i64;
+        let mut px_negative = false;
+        if chars[pos] == b'-' {
+            px_negative = true;
+            pos += 1;
+        }
+        while chars[pos] != b',' {
+            px = px * 10 + (chars[pos] - b'0') as i64;
+            pos += 1;
+        }
+        if px_negative {
+            px = -px;
+        }
+
+        // Skip ", Y=" (4 chars)
+        pos += 4;
+
+        // Parse py
+        let mut py = 0i64;
+        while pos < chars.len() {
+            py = py * 10 + (chars[pos] - b'0') as i64;
+            pos += 1;
+        }
+
+        Claw {
+            ax,
+            ay,
+            bx,
+            by,
+            px,
+            py,
+        }
+    }
+}
+
 fn inner(input: &str, offset: i64) -> i64 {
     input.trim_ascii_end().split("\n\n").fold(0, |acc, claw| {
-        let mut claw: Claw = claw.parse().unwrap();
+        let mut claw: Claw = Claw::parse(claw);
         claw.px += offset;
         claw.py += offset;
 
