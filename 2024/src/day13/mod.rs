@@ -1,3 +1,20 @@
+use parse_display::{Display, FromStr};
+
+#[derive(Display, FromStr, PartialEq, Eq, Hash, Debug, Clone)]
+#[display(
+    "Button A: X+{ax}, Y+{ay}
+Button B: X+{bx}, Y+{by}
+Prize: X={px}, Y={py}"
+)]
+struct SlowClaw {
+    ax: i64,
+    ay: i64,
+    bx: i64,
+    by: i64,
+    px: i64,
+    py: i64,
+}
+
 struct Claw {
     ax: i64,
     ay: i64,
@@ -93,6 +110,7 @@ impl Claw {
 
 fn inner(input: &str, offset: i64) -> i64 {
     input.trim_ascii_end().split("\n\n").fold(0, |acc, claw| {
+        // let mut claw: SlowClaw = claw.parse().unwrap();
         let mut claw = Claw::parse(claw);
         claw.px += offset;
         claw.py += offset;
