@@ -126,10 +126,12 @@ fn inner(input: &str, offset: i64) -> i64 {
     })
 }
 
+#[inline(always)]
 pub fn part1(input: &str) -> i64 {
     inner(input, 0)
 }
 
+#[inline(always)]
 pub fn part2(input: &str) -> i64 {
     inner(input, 10_000_000_000_000)
 }
