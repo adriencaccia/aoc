@@ -97,8 +97,8 @@ pub fn part1(input: &str) -> u32 {
     let mut quadrants: [u32; 4] = [0; 4];
 
     robots.iter().for_each(|robot| {
-        let x = (((robot.px + 100 * robot.vx) % WIDTH) + WIDTH) % WIDTH;
-        let y = (((robot.py + 100 * robot.vy) % HEIGHT) + HEIGHT) % HEIGHT;
+        let x = (robot.px + 100 * robot.vx).wrapping_rem_euclid(WIDTH);
+        let y = (robot.py + 100 * robot.vy).wrapping_rem_euclid(HEIGHT);
 
         if x < HALF_W && y < HALF_H {
             quadrants[0] += 1;
@@ -127,15 +127,15 @@ pub fn part2(input: &str) -> u32 {
     let mut robots: ArrayVec<Robot, ROBOTS_SIZE> = input.lines().map(Robot::parse).collect();
 
     robots.iter_mut().for_each(|robot| {
-        robot.px = (((robot.px + STEP_START as i32 * robot.vx) % WIDTH) + WIDTH) % WIDTH;
-        robot.py = (((robot.py + STEP_START as i32 * robot.vy) % HEIGHT) + HEIGHT) % HEIGHT;
+        robot.px = (robot.px + STEP_START as i32 * robot.vx).wrapping_rem_euclid(WIDTH);
+        robot.py = (robot.py + STEP_START as i32 * robot.vy).wrapping_rem_euclid(HEIGHT);
     });
 
     let mut seconds = STEP_START;
     loop {
         for robot in robots.iter_mut() {
-            robot.px = (((robot.px + robot.vx) % WIDTH) + WIDTH) % WIDTH;
-            robot.py = (((robot.py + robot.vy) % HEIGHT) + HEIGHT) % HEIGHT;
+            robot.px = (robot.px + robot.vx).wrapping_rem_euclid(WIDTH);
+            robot.py = (robot.py + robot.vy).wrapping_rem_euclid(HEIGHT);
         }
         seconds += 1;
 
