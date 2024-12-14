@@ -114,7 +114,7 @@ pub fn part1(input: &str) -> u32 {
     quadrants.iter().product()
 }
 
-const VARIANCE_THRESHOLD: u32 = 17_000; // arbitrary threshold
+const VARIANCE_THRESHOLD: u32 = 12_000; // arbitrary threshold
 const STEP_START: u32 = 6_500; // arbitrary starting point
 
 fn fake_variance(values: &[u32]) -> u32 {
@@ -139,12 +139,12 @@ pub fn part2(input: &str) -> u32 {
         }
         seconds += 1;
 
-        let x_positions: ArrayVec<u32, ROBOTS_SIZE> =
-            robots.iter().map(|robot| robot.px as u32).collect();
-        let y_positions: ArrayVec<u32, ROBOTS_SIZE> =
-            robots.iter().map(|robot| robot.py as u32).collect();
+        let positions: ArrayVec<u32, ROBOTS_SIZE> = robots
+            .iter()
+            .map(|robot| robot.px as u32 + robot.py as u32)
+            .collect();
 
-        let variance = fake_variance(&x_positions) + fake_variance(&y_positions);
+        let variance = fake_variance(&positions);
 
         if variance < VARIANCE_THRESHOLD {
             break;
