@@ -10,6 +10,78 @@ struct SlowRobot {
     vy: i32,
 }
 
+struct Robot {
+    px: i32,
+    py: i32,
+    vx: i32,
+    vy: i32,
+}
+
+impl Robot {
+    // Fast parser that assumes valid input format
+    #[inline]
+    fn parse(s: &str) -> Self {
+        // Skip "p=" prefix (2 chars)
+        let chars = s.as_bytes();
+        let mut pos = 2;
+
+        // Parse px
+        let mut px = 0i32;
+        while chars[pos] != b',' {
+            px = px * 10 + (chars[pos] - b'0') as i32;
+            pos += 1;
+        }
+
+        // Skip "," (1 char)
+        pos += 1;
+
+        // Parse py
+        let mut py = 0i32;
+        while chars[pos] != b' ' {
+            py = py * 10 + (chars[pos] - b'0') as i32;
+            pos += 1;
+        }
+
+        // Skip " v=" (3 chars)
+        pos += 3;
+
+        // Parse vx
+        let mut vx = 0i32;
+        let mut is_negative = false;
+        if chars[pos] == b'-' {
+            is_negative = true;
+            pos += 1;
+        }
+        while chars[pos] != b',' {
+            vx = vx * 10 + (chars[pos] - b'0') as i32;
+            pos += 1;
+        }
+        if is_negative {
+            vx = -vx;
+        }
+
+        // Skip "," (1 char)
+        pos += 1;
+
+        // Parse vy
+        let mut vy = 0i32;
+        is_negative = false;
+        if chars[pos] == b'-' {
+            is_negative = true;
+            pos += 1;
+        }
+        while pos < chars.len() && chars[pos] != b'\n' {
+            vy = vy * 10 + (chars[pos] - b'0') as i32;
+            pos += 1;
+        }
+        if is_negative {
+            vy = -vy;
+        }
+
+        Robot { px, py, vx, vy }
+    }
+}
+
 // sizes for the example input
 // const WIDTH = 11;
 // const HEIGHT = 7;
@@ -21,8 +93,7 @@ const HALF_H: i32 = HEIGHT / 2;
 const ROBOTS_SIZE: usize = 500;
 
 pub fn part1(input: &str) -> u32 {
-    let robots: ArrayVec<SlowRobot, ROBOTS_SIZE> =
-        input.lines().map(|line| line.parse().unwrap()).collect();
+    let robots: ArrayVec<Robot, ROBOTS_SIZE> = input.lines().map(Robot::parse).collect();
     let mut quadrants: [u32; 4] = [0; 4];
 
     robots.iter().for_each(|robot| {
@@ -43,18 +114,17 @@ pub fn part1(input: &str) -> u32 {
     quadrants.iter().product()
 }
 
+const VARIANCE_THRESHOLD: u32 = 17_000; // arbitrary threshold
+const STEP_START: u32 = 6_500; // arbitrary starting point
+
 fn fake_variance(values: &[u32]) -> u32 {
-    let mean = values.iter().sum::<u32>() / values.len() as u32;
+    let mean = values.iter().sum::<u32>() / ROBOTS_SIZE as u32;
     let variance = values.iter().map(|&x| x.abs_diff(mean)).sum();
     variance
 }
 
-const VARIANCE_THRESHOLD: u32 = 17_000; // arbitrary threshold
-const STEP_START: u32 = 6_500; // arbitrary starting point
-
 pub fn part2(input: &str) -> u32 {
-    let mut robots: ArrayVec<SlowRobot, ROBOTS_SIZE> =
-        input.lines().map(|line| line.parse().unwrap()).collect();
+    let mut robots: ArrayVec<Robot, ROBOTS_SIZE> = input.lines().map(Robot::parse).collect();
 
     robots.iter_mut().for_each(|robot| {
         robot.px = (((robot.px + STEP_START as i32 * robot.vx) % WIDTH) + WIDTH) % WIDTH;
