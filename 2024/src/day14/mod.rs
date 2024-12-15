@@ -114,8 +114,8 @@ pub fn part1(input: &str) -> u32 {
     quadrants.iter().product()
 }
 
-const VARIANCE_THRESHOLD: u32 = 12_000; // arbitrary threshold
-const STEP_START: u32 = 6_500; // arbitrary starting point
+const VARIANCE_THRESHOLD: u32 = 9000; // arbitrary threshold
+const WIDTH_INVERSE_IN_CHINESE_REMAINDER_THEOREM_WITH_HEIGHT: u32 = 51;
 
 fn fake_variance(values: &[u32]) -> u32 {
     let mean = values.iter().sum::<u32>() / ROBOTS_SIZE as u32;
@@ -126,32 +126,39 @@ fn fake_variance(values: &[u32]) -> u32 {
 pub fn part2(input: &str) -> u32 {
     let mut robots: ArrayVec<Robot, ROBOTS_SIZE> = input.lines().map(Robot::parse).collect();
 
-    robots.iter_mut().for_each(|robot| {
-        robot.px = (robot.px + STEP_START as i32 * robot.vx).rem_euclid(WIDTH);
-        robot.py = (robot.py + STEP_START as i32 * robot.vy).rem_euclid(HEIGHT);
-    });
+    let mut bx = 0;
+    let mut by = 0;
 
-    let mut seconds = STEP_START;
-    loop {
+    for seconds in 1..=(HEIGHT as usize) {
         for robot in robots.iter_mut() {
             robot.px = (robot.px + robot.vx).rem_euclid(WIDTH);
             robot.py = (robot.py + robot.vy).rem_euclid(HEIGHT);
         }
-        seconds += 1;
 
-        let positions: ArrayVec<u32, ROBOTS_SIZE> = robots
-            .iter()
-            .map(|robot| robot.px as u32 + robot.py as u32)
-            .collect();
+        let x_positions: ArrayVec<u32, ROBOTS_SIZE> =
+            robots.iter().map(|robot| robot.px as u32).collect();
+        if fake_variance(&x_positions) < VARIANCE_THRESHOLD {
+            bx = seconds;
+            if by != 0 {
+                break;
+            }
+        }
 
-        let variance = fake_variance(&positions);
-
-        if variance < VARIANCE_THRESHOLD {
-            break;
+        let y_positions: ArrayVec<u32, ROBOTS_SIZE> =
+            robots.iter().map(|robot| robot.py as u32).collect();
+        if fake_variance(&y_positions) < VARIANCE_THRESHOLD {
+            by = seconds;
+            if bx != 0 {
+                break;
+            }
         }
     }
 
-    seconds
+    // see https://www.reddit.com/r/adventofcode/comments/1he0asr/2024_day_14_part_2_why_have_fun_with_image/
+    bx as u32
+        + (WIDTH_INVERSE_IN_CHINESE_REMAINDER_THEOREM_WITH_HEIGHT * (by as u32 - bx as u32))
+            .rem_euclid(HEIGHT as u32)
+            * WIDTH as u32
 }
 
 #[cfg(test)]
