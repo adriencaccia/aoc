@@ -114,17 +114,20 @@ pub fn part1(input: &str) -> u32 {
     quadrants.iter().product()
 }
 
-const VARIANCE_THRESHOLD: u32 = 9000; // arbitrary threshold
+// no need to use all 500 robots since we are checking the variance
+const SAMPLED_SIZE: usize = 128;
+const VARIANCE_THRESHOLD: u32 = 2300; // arbitrary threshold
 const WIDTH_INVERSE_IN_CHINESE_REMAINDER_THEOREM_WITH_HEIGHT: u32 = 51;
 
 fn fake_variance(values: &[u32]) -> u32 {
-    let mean = values.iter().sum::<u32>() / ROBOTS_SIZE as u32;
+    let mean = values.iter().sum::<u32>() / SAMPLED_SIZE as u32;
     let variance = values.iter().map(|&x| x.abs_diff(mean)).sum();
     variance
 }
 
 pub fn part2(input: &str) -> u32 {
-    let mut robots: ArrayVec<Robot, ROBOTS_SIZE> = input.lines().map(Robot::parse).collect();
+    let mut robots: ArrayVec<Robot, SAMPLED_SIZE> =
+        input.lines().take(SAMPLED_SIZE).map(Robot::parse).collect();
 
     let mut bx = 0;
     let mut by = 0;
@@ -135,7 +138,7 @@ pub fn part2(input: &str) -> u32 {
             robot.py = (robot.py + robot.vy).rem_euclid(HEIGHT);
         }
 
-        let x_positions: ArrayVec<u32, ROBOTS_SIZE> =
+        let x_positions: ArrayVec<u32, SAMPLED_SIZE> =
             robots.iter().map(|robot| robot.px as u32).collect();
         if fake_variance(&x_positions) < VARIANCE_THRESHOLD {
             bx = seconds;
@@ -144,7 +147,7 @@ pub fn part2(input: &str) -> u32 {
             }
         }
 
-        let y_positions: ArrayVec<u32, ROBOTS_SIZE> =
+        let y_positions: ArrayVec<u32, SAMPLED_SIZE> =
             robots.iter().map(|robot| robot.py as u32).collect();
         if fake_variance(&y_positions) < VARIANCE_THRESHOLD {
             by = seconds;
