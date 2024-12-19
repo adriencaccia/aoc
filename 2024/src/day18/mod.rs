@@ -2,26 +2,6 @@ use std::{cmp::Ordering, collections::BinaryHeap};
 
 use itertools::Itertools;
 
-// #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-// enum Direction {
-//     Up,
-//     Down,
-//     Left,
-//     Right,
-// }
-
-// impl Direction {
-//     #[inline(always)]
-//     fn dx_dy(&self) -> (i32, i32) {
-//         match self {
-//             Direction::Up => (-1, 0),
-//             Direction::Down => (1, 0),
-//             Direction::Left => (0, -1),
-//             Direction::Right => (0, 1),
-//         }
-//     }
-// }
-
 const DIRECTIONS: [(i32, i32); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
 #[derive(Clone, Eq, PartialEq)]
