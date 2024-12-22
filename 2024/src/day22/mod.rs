@@ -1,5 +1,3 @@
-use rustc_hash::{FxHashMap, FxHashSet};
-
 const CHANGES: usize = 2000;
 
 fn next(secret: u64) -> u64 {
@@ -23,10 +21,10 @@ pub fn part1(input: &str) -> u64 {
 }
 
 pub fn part2(input: &str) -> u64 {
-    let mut bananas_for_sequence = FxHashMap::default();
+    let mut bananas_for_sequence = [[[[0; 20]; 20]; 20]; 20];
 
     input.lines().for_each(|line| {
-        let mut seen = FxHashSet::default();
+        let mut seen = [[[[false; 20]; 20]; 20]; 20];
         let mut prices = [0; CHANGES + 1];
         let mut changes = [0; CHANGES + 1];
         let mut secret: u64 = line.parse().unwrap();
@@ -38,19 +36,29 @@ pub fn part2(input: &str) -> u64 {
             prices[i] = price;
             changes[i] = prices[i] as i8 - prices[i - 1] as i8;
             if i > 3 {
-                let sequence = (changes[i - 3], changes[i - 2], changes[i - 1], changes[i]);
-                if seen.contains(&sequence) {
+                let seq = (
+                    (changes[i - 3] + 10) as usize,
+                    (changes[i - 2] + 10) as usize,
+                    (changes[i - 1] + 10) as usize,
+                    (changes[i] + 10) as usize,
+                );
+                if seen[seq.0][seq.1][seq.2][seq.3] {
                     continue;
                 } else {
-                    bananas_for_sequence.entry(sequence).or_insert(0);
-                    *bananas_for_sequence.get_mut(&sequence).unwrap() += price;
-                    seen.insert(sequence);
+                    bananas_for_sequence[seq.0][seq.1][seq.2][seq.3] += price;
+                    seen[seq.0][seq.1][seq.2][seq.3] = true;
                 }
             }
         }
     });
 
-    *bananas_for_sequence.values().max().unwrap()
+    *bananas_for_sequence
+        .iter()
+        .flatten()
+        .flatten()
+        .flatten()
+        .max()
+        .unwrap()
 }
 
 #[cfg(test)]
