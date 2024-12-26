@@ -40,10 +40,6 @@ pub fn part1(input: &str) -> u32 {
     })
 }
 
-pub fn part2(_input: &str) -> u32 {
-    0
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
