@@ -18,7 +18,9 @@ macro_rules! benches_day {
                 let mut group = c.benchmark_group(concat!("day", $day_num));
                 let input = get_day_input!($day_num);
                 group.bench_function(format!("day{}_part1", $day_num), |b| b.iter(|| [<day $day_num>]::part1(input)));
-                group.bench_function(format!("day{}_part2", $day_num), |b| b.iter(|| [<day $day_num>]::part2(input)));
+                if $day_num != 25 {
+                    group.bench_function(format!("day{}_part2", $day_num), |b| b.iter(|| [<day $day_num>]::part2(input)));
+                }
             }
         }
     };
@@ -38,4 +40,4 @@ macro_rules! benches {
     };
 }
 
-benches!(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24); // Add more days here
+benches!(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25); // Add more days here
