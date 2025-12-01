@@ -17,7 +17,7 @@ impl Parity {
 
     #[cfg(debug_assertions)]
     fn to_symbol(self, step: usize) -> &'static str {
-        let step_parity = if step % 2 == 0 {
+        let step_parity = if step.is_multiple_of(2) {
             Parity::Even
         } else {
             Parity::Odd

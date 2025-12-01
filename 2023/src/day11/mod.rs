@@ -25,9 +25,9 @@ fn parse_input(input: &str) -> (u32, usize) {
     }
 
     let mut galaxies: HashSet<(usize, usize)> = HashSet::new();
-    for x in 0..grid.len() {
-        for y in 0..grid[0].len() {
-            if grid[x][y] == '#' {
+    for (x, row) in grid.iter().enumerate() {
+        for (y, &c) in row.iter().enumerate() {
+            if c == '#' {
                 galaxies.insert((x, y));
             }
         }

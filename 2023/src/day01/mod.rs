@@ -5,7 +5,7 @@ fn parse_input(input: &str) -> (u32, u32) {
             let mut digits = line.chars().filter_map(|char| char.to_digit(10));
             let first = digits.next().unwrap();
 
-            let part1 = match digits.last() {
+            let part1 = match digits.next_back() {
                 Some(last) => first * 10 + last,
                 None => first * 10 + first,
             };

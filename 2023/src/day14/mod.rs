@@ -52,7 +52,7 @@ enum Direction {
     East,
 }
 
-fn tilt_grid(grid: &mut Vec<Vec<Tile>>, direction: Direction) {
+fn tilt_grid(grid: &mut [Vec<Tile>], direction: Direction) {
     match direction {
         Direction::North => {
             for y in 0..grid[0].len() {
@@ -64,7 +64,7 @@ fn tilt_grid(grid: &mut Vec<Vec<Tile>>, direction: Direction) {
             }
         }
         Direction::West => {
-            for (x, row) in grid.clone().iter().enumerate() {
+            for (x, row) in grid.to_owned().iter().enumerate() {
                 grid[x] = tilt_rocks(row.to_vec());
             }
         }
@@ -80,7 +80,7 @@ fn tilt_grid(grid: &mut Vec<Vec<Tile>>, direction: Direction) {
             }
         }
         Direction::East => {
-            for (x, row) in grid.clone().iter().enumerate() {
+            for (x, row) in grid.to_owned().iter().enumerate() {
                 let mut reversed_row = row.to_vec();
                 reversed_row.reverse();
                 let mut reversed_rocks = tilt_rocks(reversed_row);
@@ -97,7 +97,7 @@ fn get_load(grid: &[Vec<Tile>]) -> u32 {
     }) as u32
 }
 
-fn do_cycle(grid: &mut Vec<Vec<Tile>>) {
+fn do_cycle(grid: &mut [Vec<Tile>]) {
     for direction in Direction::iter().collect_vec() {
         tilt_grid(grid, direction);
     }

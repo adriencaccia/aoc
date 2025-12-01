@@ -3,6 +3,7 @@ use parse_display::{Display, FromStr};
 
 #[derive(Display, FromStr, PartialEq, Eq, Hash, Debug, Clone)]
 #[display("p={px},{py} v={vx},{vy}")]
+#[allow(dead_code)]
 struct SlowRobot {
     px: i32,
     py: i32,

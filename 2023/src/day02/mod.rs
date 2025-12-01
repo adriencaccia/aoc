@@ -2,7 +2,7 @@ use itertools::MultiUnzip;
 use lazy_static::lazy_static;
 use parse_display::FromStr;
 use regex::Regex;
-use std::{str::FromStr as StdFromStr, u32};
+use std::str::FromStr as StdFromStr;
 
 // only 12 red cubes, 13 green cubes, and 14 blue cubes
 
@@ -25,8 +25,7 @@ fn parse_input(input: &str) -> (u32, u32) {
 
             let is_game_valid = cubes_sets
                 .clone()
-                .map(|cubes| cubes.red <= 12 && cubes.green <= 13 && cubes.blue <= 14)
-                .all(|set| set);
+                .all(|cubes| cubes.red <= 12 && cubes.green <= 13 && cubes.blue <= 14);
 
             let (red, green, blue): (Vec<u32>, Vec<u32>, Vec<u32>) = cubes_sets
                 .map(|cubes| (cubes.red as u32, cubes.green as u32, cubes.blue as u32))

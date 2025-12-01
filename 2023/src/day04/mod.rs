@@ -12,7 +12,7 @@ fn parse_input(input: &str) -> (u32, u32) {
         .map(|(idx, line)| {
             let (winning, mine): (HashSet<&str>, HashSet<&str>) = line
                 .split(':')
-                .last()
+                .next_back()
                 .unwrap()
                 .split('|')
                 .map(|numbers| numbers.split_ascii_whitespace().collect())

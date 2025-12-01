@@ -1,5 +1,5 @@
 fn parse_input(input: &str) -> (u32, u32) {
-    let lines = input.trim().lines();
+    let _lines = input.trim().lines();
 
     // parse bricks
     // sort them by their first z coordinate

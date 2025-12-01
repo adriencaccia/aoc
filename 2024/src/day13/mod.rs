@@ -6,6 +6,7 @@ use parse_display::{Display, FromStr};
 Button B: X+{bx}, Y+{by}
 Prize: X={px}, Y={py}"
 )]
+#[allow(dead_code)]
 struct SlowClaw {
     ax: i64,
     ay: i64,

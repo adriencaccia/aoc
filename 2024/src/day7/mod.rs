@@ -11,7 +11,7 @@ fn is_solvable(target: u64, values: &[u64]) -> bool {
         return target == unsafe { *values.get_unchecked(0) };
     }
     let last = unsafe { *values.get_unchecked(len - 1) };
-    if target % last == 0 && is_solvable(target / last, &values[..(len - 1)]) {
+    if target.is_multiple_of(last) && is_solvable(target / last, &values[..(len - 1)]) {
         return true;
     }
     if target > last && is_solvable(target - last, &values[..(len - 1)]) {
@@ -63,7 +63,7 @@ fn is_solvable_2(target: u64, values: &[u64]) -> bool {
         return target == unsafe { *values.get_unchecked(0) };
     }
     let last = unsafe { *values.get_unchecked(len - 1) };
-    if target % last == 0 && is_solvable_2(target / last, &values[..(len - 1)]) {
+    if target.is_multiple_of(last) && is_solvable_2(target / last, &values[..(len - 1)]) {
         return true;
     }
     if target > last && is_solvable_2(target - last, &values[..(len - 1)]) {

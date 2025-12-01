@@ -15,7 +15,7 @@ fn blink(cache: &mut FxHashMap<(u64, u64), u64>, v: u64, steps: u64) -> u64 {
         (0, steps) => blink(cache, 1, steps - 1),
         (v, steps) => {
             let num_digits = get_num_digits(v);
-            if num_digits % 2 == 0 {
+            if num_digits.is_multiple_of(2) {
                 let first_half = v / 10_u64.pow(num_digits as u32 / 2);
                 let second_half = v % 10_u64.pow(num_digits as u32 / 2);
 

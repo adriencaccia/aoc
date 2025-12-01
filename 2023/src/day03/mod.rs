@@ -36,18 +36,15 @@ fn parse_input(input: &str) -> (u32, u32) {
             indices.push((i, range_to_match.start));
             indices.push((i, range_to_match.end - 1));
 
-            let has_symbol = indices
-                .into_iter()
-                .map(|(x, y)| {
-                    let char = matrix[x].chars().nth(y).unwrap();
-                    if char == '*' {
-                        gears.entry((x, y)).or_default().push(number);
+            let has_symbol = indices.into_iter().any(|(x, y)| {
+                let char = matrix[x].chars().nth(y).unwrap();
+                if char == '*' {
+                    gears.entry((x, y)).or_default().push(number);
 
-                        return true;
-                    }
-                    !char.is_ascii_digit() && char != '.'
-                })
-                .any(|b| b);
+                    return true;
+                }
+                !char.is_ascii_digit() && char != '.'
+            });
 
             if has_symbol {
                 part1 += number;

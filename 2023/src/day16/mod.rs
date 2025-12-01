@@ -35,7 +35,7 @@ impl Direction {
     }
 }
 
-fn get_energized_tiles(grid: &Vec<Vec<Tile>>, beam: (isize, isize, Direction)) -> u32 {
+fn get_energized_tiles(grid: &[Vec<Tile>], beam: (isize, isize, Direction)) -> u32 {
     let mut energized_grid: Vec<Vec<bool>> = vec![vec![false; grid[0].len()]; grid.len()];
     // using a matrix to check visits is waayyyyy faster than using HashSet, as .contains will take more time as the HashSet grows
     let mut visited: Vec<Vec<[bool; 4]>> = vec![vec![[false; 4]; grid[0].len()]; grid.len()];

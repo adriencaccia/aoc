@@ -51,7 +51,7 @@ impl PartialOrd for State {
 /// Do not use the dist matrix, as the shortest path to the very end is not necessarily including the shortest path to every of its nodes.
 /// Because of the maximum 3 moves in the same direction rule.
 pub fn shortest_path(
-    grid: &Vec<Vec<u32>>,
+    grid: &[Vec<u32>],
     min_same_direction: usize,
     max_same_direction: usize,
 ) -> u32 {
@@ -93,8 +93,8 @@ pub fn shortest_path(
         {
             continue;
         }
-        if direction.is_some() {
-            visited[position][direction.unwrap().to_usize()][same_direction_moves] = true;
+        if let Some(direction) = direction {
+            visited[position][direction.to_usize()][same_direction_moves] = true;
         }
 
         for next_direction in Direction::iter() {

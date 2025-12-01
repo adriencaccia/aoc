@@ -18,7 +18,7 @@ fn parse_input(input: &str) -> (u32, u32) {
         .lines()
         .map(|line| {
             line.split(':')
-                .last()
+                .next_back()
                 .unwrap()
                 .split_ascii_whitespace()
                 .map(|n| n.parse().unwrap())
